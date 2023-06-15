@@ -2,10 +2,22 @@ import { PrismaClient } from '@prisma/client';
 
 const db = new PrismaClient();
 
+/*
+ * Seed - npx prisma db seed
+ * Reset - npx prisma db push --force-reset && npx prisma db seed
+ */
+
 async function seed() {
   const projectDreamTeam = await db.project.create({
     data: {
       name: 'Dream Team',
+    },
+  });
+
+  const brokerAplha = await db.broker.create({
+    data: {
+      name: 'Aplha',
+      managerPercentage: 2,
     },
   });
 

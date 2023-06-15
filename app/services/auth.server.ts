@@ -17,7 +17,6 @@ authenticator.use(
 
     try {
       const parsedForm = LoginSchema.parse({ email, password });
-
       const user = await db.user.findUnique({
         where: { email: parsedForm.email },
       });
@@ -33,11 +32,6 @@ authenticator.use(
 
       return user;
     } catch (error) {
-      console.log(
-        '🚀 ~ file: auth.server.ts:37 ~ newFormStrategy ~ error:',
-        error,
-      );
-      // console.log('error', error);
       throw new AuthorizationError('Email and password does not match');
     }
   }),

@@ -16,7 +16,6 @@ import { authenticator } from '~/services/auth.server';
 import { sessionStorage } from '~/services/session.server';
 
 type FormInput = z.infer<typeof LoginSchema>;
-
 type LoaderError = { message: string } | null;
 
 export const action = async ({ request }: ActionArgs) => {
@@ -30,7 +29,6 @@ export const loader = async ({ request }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
     successRedirect: '/',
   });
-
   const session = await sessionStorage.getSession(
     request.headers.get('Cookie'),
   );
@@ -39,11 +37,10 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ error });
 };
 
-export default function Screen() {
+export default function Login() {
   const submit = useSubmit();
   const navigation = useNavigation();
   const { error } = useLoaderData<typeof loader>();
-
   const methods = useForm<FormInput>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {

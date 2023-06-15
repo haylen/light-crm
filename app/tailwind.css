@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /*
+   * This is needed to hide tags that are by default inserted by Remix
+   * when the "prefetch" feature is enabled on links.
+   */
+  link {
+    display: none !important;
+  }
+}
