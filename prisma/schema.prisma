@@ -8,60 +8,111 @@ datasource db {
 }
 
 enum UserRole {
-  ADMIN
-  BUYER
-  AFFILIATE
+  Admin
+  Buyer
+  Affiliate
+  Accountant
 }
 
 enum PaymentType {
-  CPA
-  CPL
-  CPA_CRG
+  Cpa
+  Cpl
+  CpaCrg
 }
 
-model Project {
-  id         String   @id @default(uuid())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  name       String
-  users      User[]
+enum LeadSource {
+  Google
+  Facebook
+  Instagram
+  TikTok
+  Other
 }
 
 model User {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  email        String   @unique
+  id           String            @id @default(uuid())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  email        String            @unique
   passwordHash String
-  projectId    String
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   roles        UserRolesToUser[]
   brokers      Broker[]
 }
 
 model UserRolesToUser {
-  id         String   @id @default(uuid())
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String
-  role       UserRole
-  createdAt  DateTime @default(now())
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      UserRole
+  createdAt DateTime @default(now())
 }
 
 model Broker {
-  id                String   @id @default(uuid())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                String         @id @default(uuid())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   name              String
-  manager           User?    @relation(fields: [managerId], references: [id])
+  manager           User?          @relation(fields: [managerId], references: [id], onDelete: SetNull)
   managerId         String?
-  managerPercentage Float?
+  managerPercentage Float?         @db.DoublePrecision
   deliveryPlans     DeliveryPlan[]
 }
 
-model DeliveryPlan {
-  id                String @id @default(uuid())
-  name              String
-  broker            Broker @relation(fields: [brokerId], references: [id])
-  brokerId          String
+model BrokerIntegration {
+  id           String         @id @default(uuid())
+  createdAt    DateTime       @default(now())
+  name         String
+  DeliveryPlan DeliveryPlan[]
 }
 
+model Funnel {
+  id           String         @id @default(uuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  name         String         @unique
+  websiteUrl   String
+  country      String
+  language     String?
+  DeliveryPlan DeliveryPlan[]
+  Lead         Lead[]
+}
+
+model DeliveryPlan {
+  id                  String             @id @default(uuid())
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  name                String
+  broker              Broker             @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  brokerId            String
+  brokerIntegration   BrokerIntegration? @relation(fields: [brokerIntegrationId], references: [id], onDelete: SetNull)
+  brokerIntegrationId String?
+  funnel              Funnel?            @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+  funnelId            String?
+  buyPrice            Float
+  sellPrice           Float
+  dailyCap            Int                @db.SmallInt
+  totalCap            Int                @db.SmallInt
+  startDate           DateTime           @db.Date
+  endDate             DateTime           @db.Date
+  workHoursStart      DateTime           @db.Time
+  workHoursEnd        DateTime           @db.Time
+  timezone            Int                @db.SmallInt
+  paymentType         PaymentType
+}
+
+model Lead {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  firstName String
+  lastName  String
+  email     String
+  phone     String
+  sentAt    DateTime
+  depositAt DateTime
+  status    String
+  clickId   String
+  agentIp   String
+  funnel    Funnel?    @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+  funnelId  String?
+  source    LeadSource
+}

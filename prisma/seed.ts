@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
+import { hashPassword } from '~/services/auth.server';
 
 const db = new PrismaClient();
 
@@ -8,26 +9,36 @@ const db = new PrismaClient();
  */
 
 async function seed() {
-  const projectDreamTeam = await db.project.create({
-    data: {
-      name: 'Dream Team',
-    },
-  });
-
-  const brokerAplha = await db.broker.create({
+  await db.broker.create({
     data: {
       name: 'Aplha',
       managerPercentage: 2,
     },
   });
 
-  const kody = await db.user.create({
+  const passwordHash = await hashPassword('twixrox');
+
+  await db.user.create({
     data: {
+      passwordHash,
       email: 'kody@gmail.com',
-      // this is a hashed version of "twixrox"
-      passwordHash:
-        '$2b$10$K7L1OJ45/4Y2nIvhRVpCe.FSmhDdWoXehVzJptJ/op0lSsvqNu/1u',
-      projectId: projectDreamTeam.id,
+      roles: {
+        create: {
+          role: UserRole.Admin,
+        },
+      },
+    },
+  });
+
+  await db.user.create({
+    data: {
+      passwordHash,
+      email: 'aff-1@one.com',
+      roles: {
+        create: {
+          role: UserRole.Affiliate,
+        },
+      },
     },
   });
 }

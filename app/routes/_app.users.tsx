@@ -1,3 +1,4 @@
+import { UserRole } from '@prisma/client';
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import {
@@ -6,6 +7,7 @@ import {
   useNavigate,
   useNavigation,
 } from '@remix-run/react';
+import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
@@ -28,13 +30,29 @@ export const loader = async ({ request }: LoaderArgs) => {
   const authenticatedUser = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
-  const brokers = await db.broker.findMany({
+  const users = await db.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      roles: {
+        select: {
+          role: true,
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
   const session = await getSession(request.headers.get('Cookie'));
-  const deleteBrokerAction = session.get(SessionFlashKey.DeleteBrokerMeta);
+  const deleteUserAction = session.get(SessionFlashKey.DeleteUserMeta);
 
-  return json({ authenticatedUser, brokers, deleteBrokerAction });
+  return json(
+    { authenticatedUser, users, deleteUserAction },
+    {
+      headers: {
+        'Set-Cookie': await commitSession(session),
+      },
+    },
+  );
 };
 
 export const action = async ({ request }: ActionArgs) => {
@@ -43,22 +61,30 @@ export const action = async ({ request }: ActionArgs) => {
   let deleteAction: ActionData['deleteAction'];
 
   if (method === ActionType.DeleteItemConfirmation) {
-    const brokerId = form.get('_itemId');
+    const authenticatedUser = await authenticator.isAuthenticated(request, {
+      failureRedirect: '/login',
+    });
+
+    const userId = form.get('_itemId');
 
     try {
+      if (userId === authenticatedUser.id) {
+        throw new Error('You cannot delete yourself!');
+      }
+
       const parsedForm = DeleteItemConfirmationFormSchema.parse({
         method,
-        itemId: brokerId,
+        itemId: userId,
       });
-      await db.broker.delete({ where: { id: parsedForm.itemId } });
+      await db.user.delete({ where: { id: parsedForm.itemId } });
       deleteAction = { isSuccessful: true };
     } catch (error) {
       deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
     } finally {
       const session = await getSession(request.headers.get('Cookie'));
-      session.flash(SessionFlashKey.DeleteBrokerMeta, deleteAction);
+      session.flash(SessionFlashKey.DeleteUserMeta, deleteAction);
 
-      return redirect('/brokers', {
+      return redirect('/users', {
         headers: {
           'Set-Cookie': await commitSession(session),
         },
@@ -66,36 +92,36 @@ export const action = async ({ request }: ActionArgs) => {
     }
   }
 
-  return redirect('/brokers');
+  return redirect('/users');
 };
 
-export const Brokers = () => {
+export const Users = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { brokers, deleteBrokerAction } = useLoaderData<typeof loader>();
-  const [brokerIdToDelete, setBrokerIdToDelete] = useState<string>();
+  const { authenticatedUser, users, deleteUserAction } =
+    useLoaderData<typeof loader>();
+  const [userIdToDelete, setUserIdToDelete] = useState<string>();
 
   const [deleteActionError, setDeleteActionError] = useState<
     string | undefined
   >();
 
   useEffect(() => {
-    if (deleteBrokerAction?.isSuccessful) {
-      setBrokerIdToDelete(undefined);
+    if (deleteUserAction?.isSuccessful) {
+      setUserIdToDelete(undefined);
     }
 
-    if (deleteBrokerAction?.error) {
-      setDeleteActionError(deleteBrokerAction.error);
+    if (deleteUserAction?.error) {
+      setDeleteActionError(deleteUserAction.error);
     }
-  }, [deleteBrokerAction]);
+  }, [deleteUserAction]);
 
-  const handleNewBrokerClick = () => navigate('new');
+  const handleNewUserClick = () => navigate('new');
 
-  const getOnBrokerClickHandler = (brokerId: string) => () =>
-    navigate(brokerId);
+  const getOnUserClickHandler = (userId: string) => () => navigate(userId);
 
   const getOnDeleteClickHandler =
-    (brokerId: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    (userId: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
       if (event) {
         event.stopPropagation();
       }
@@ -104,11 +130,11 @@ export const Brokers = () => {
         return;
       }
 
-      setBrokerIdToDelete(brokerId);
+      setUserIdToDelete(userId);
     };
 
   const handleDeleteModalClose = () => {
-    setBrokerIdToDelete(undefined);
+    setUserIdToDelete(undefined);
     setDeleteActionError(undefined);
   };
 
@@ -117,19 +143,19 @@ export const Brokers = () => {
       <Outlet />
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-medium">Brokers</h1>
+          <h1 className="text-2xl font-medium">Users</h1>
         </div>
         <button
           className="btn btn-circle btn-outline"
-          onClick={handleNewBrokerClick}
+          onClick={handleNewUserClick}
         >
           <Plus size={20} />
         </button>
       </div>
 
-      {brokerIdToDelete && (
+      {userIdToDelete && (
         <DeleteItemConfirmationModal
-          itemId={brokerIdToDelete}
+          itemId={userIdToDelete}
           formError={deleteActionError}
           isSubmitting={['submitting', 'loading'].includes(navigation.state)}
           onClose={handleDeleteModalClose}
@@ -141,26 +167,43 @@ export const Brokers = () => {
           <thead>
             <tr>
               <th></th>
-              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {brokers.map((broker, index) => (
+            {users.map((user, index) => (
               <tr
-                key={broker.id}
+                key={user.id}
                 className="hover"
-                onClick={getOnBrokerClickHandler(broker.id)}
+                onClick={getOnUserClickHandler(user.id)}
               >
                 <th>{index + 1}</th>
-                <th>{broker.name}</th>
+                <th>{user.email}</th>
                 <th>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={getOnDeleteClickHandler(broker.id)}
-                  >
-                    <Trash size={20} />
-                  </button>
+                  {user.roles.map(({ role }, index) => (
+                    <div
+                      key={role}
+                      className={clsx(
+                        'badge badge-outline',
+                        role === UserRole.Admin && 'badge-accent',
+                        index !== user.roles.length - 1 && 'mr-2',
+                      )}
+                    >
+                      {role}
+                    </div>
+                  ))}
+                </th>
+                <th>
+                  {authenticatedUser.id !== user.id && (
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={getOnDeleteClickHandler(user.id)}
+                    >
+                      <Trash size={20} />
+                    </button>
+                  )}
                 </th>
               </tr>
             ))}
@@ -171,4 +214,4 @@ export const Brokers = () => {
   );
 };
 
-export default Brokers;
+export default Users;

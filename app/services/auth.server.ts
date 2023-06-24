@@ -6,6 +6,9 @@ import { LoginSchema } from '~/schemas/loginForm';
 import { sessionStorage } from '~/services/session.server';
 import { db } from '~/utils/db.server';
 
+export const hashPassword = async (password: string) =>
+  await bcrypt.hash(password, 10);
+
 export const authenticator = new Authenticator<User>(sessionStorage);
 
 authenticator.use(
@@ -32,7 +35,7 @@ authenticator.use(
 
       return user;
     } catch (error) {
-      throw new AuthorizationError('Email and password does not match');
+      throw new AuthorizationError('Email and password do not match');
     }
   }),
 );
