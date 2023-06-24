@@ -113,13 +113,17 @@ export default function Login() {
                 disabled={
                   (!methods.formState.isValid &&
                     methods.formState.submitCount !== 0) ||
-                  navigation.state === 'submitting'
+                  ['submitting', 'loading'].includes(navigation.state)
                 }
                 className={`btn btn-accent btn-block ${
-                  navigation.state === 'submitting' ? 'loading' : ''
+                  ['submitting', 'loading'].includes(navigation.state)
+                    ? 'loading'
+                    : ''
                 }`}
               >
-                {navigation.state === 'submitting' ? '' : 'Log In'}
+                {['submitting', 'loading'].includes(navigation.state)
+                  ? ''
+                  : 'Log In'}
               </button>
             </div>
           </Form>

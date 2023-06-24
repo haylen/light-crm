@@ -38,6 +38,7 @@ export const DeleteItemConfirmationModal = ({
           </div>
           <div className="modal-action gap-4 justify-between">
             <button
+              type="button"
               disabled={isSubmitting}
               className="btn btn-outline flex-1"
               onClick={onClose}
