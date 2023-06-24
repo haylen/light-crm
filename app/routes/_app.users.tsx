@@ -10,6 +10,7 @@ import {
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
+import { verifyAuthenticityToken } from 'remix-utils';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -56,6 +57,13 @@ export const loader = async ({ request }: LoaderArgs) => {
 };
 
 export const action = async ({ request }: ActionArgs) => {
+  try {
+    const session = await getSession(request.headers.get('Cookie'));
+    await verifyAuthenticityToken(request, session);
+  } catch {
+    return redirect('/users');
+  }
+
   const form = await request.formData();
   const method = form.get('_method');
   let deleteAction: ActionData['deleteAction'];

@@ -12,11 +12,13 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
+import { verifyAuthenticityToken } from 'remix-utils';
 import { Modal } from '~/components/Modal';
 import { UserForm } from '~/components/UserForm';
 import type { FormInput } from '~/schemas/user';
 import { UpdateUserSchema } from '~/schemas/user';
 import { hashPassword } from '~/services/auth.server';
+import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { db } from '~/utils/db.server';
 
@@ -33,6 +35,13 @@ type ActionData = {
 const badRequest = (data: ActionData) => json(data, { status: 400 });
 
 export const action = async ({ request, params }: ActionArgs) => {
+  try {
+    const session = await getSession(request.headers.get('Cookie'));
+    await verifyAuthenticityToken(request, session);
+  } catch {
+    return redirect('/users');
+  }
+
   const form = await request.formData();
   const email = form.get('email');
   const roles = form.getAll('roles');

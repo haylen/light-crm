@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import {
   Form,
@@ -10,15 +11,23 @@ import {
 import { clsx } from 'clsx';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
+import { AuthenticityTokenInput, verifyAuthenticityToken } from 'remix-utils';
 import type { z } from 'zod';
 import { LoginSchema } from '~/schemas/loginForm';
 import { authenticator } from '~/services/auth.server';
-import { sessionStorage } from '~/services/session.server';
+import { getSession, sessionStorage } from '~/services/session.server';
 
 type FormInput = z.infer<typeof LoginSchema>;
 type LoaderError = { message: string } | null;
 
 export const action = async ({ request }: ActionArgs) => {
+  try {
+    const session = await getSession(request.headers.get('Cookie'));
+    await verifyAuthenticityToken(request, session);
+  } catch {
+    return redirect('/login');
+  }
+
   await authenticator.authenticate('form', request, {
     successRedirect: '/',
     failureRedirect: '/login',
@@ -64,6 +73,7 @@ export default function Login() {
           </h2>
 
           <Form method="post" onSubmit={methods.handleSubmit(handleSubmit)}>
+            <AuthenticityTokenInput />
             <div>
               <label htmlFor="email" className="label">
                 <span className="label-text">Email</span>

@@ -10,10 +10,12 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
+import { verifyAuthenticityToken } from 'remix-utils';
 import type { z } from 'zod';
 import { BrokerForm } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
 import { BrokerSchema } from '~/schemas/broker';
+import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { db } from '~/utils/db.server';
 
@@ -25,10 +27,13 @@ type FormInput = z.infer<typeof BrokerSchema>;
 const badRequest = (data: ActionData) => json(data, { status: 400 });
 
 export const action = async ({ request }: ActionArgs) => {
-  const form = await request.formData();
-  const name = form.get('name');
-
   try {
+    const session = await getSession(request.headers.get('Cookie'));
+    await verifyAuthenticityToken(request, session);
+
+    const form = await request.formData();
+    const name = form.get('name');
+
     const parsedForm = BrokerSchema.parse({ name });
     await db.broker.create({
       data: {

@@ -1,6 +1,7 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
+import { AuthenticityTokenInput } from 'remix-utils';
 import type { z } from 'zod';
 import type { BrokerSchema } from '~/schemas/broker';
 
@@ -24,6 +25,7 @@ export const BrokerForm = ({
   onSubmit,
 }: BrokerFormProps) => (
   <Form method="post" onSubmit={onSubmit}>
+    <AuthenticityTokenInput />
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Name</span>

@@ -1,15 +1,10 @@
-import type { ActionArgs } from '@remix-run/node';
 import { Form, NavLink } from '@remix-run/react';
 import { Briefcase, Crosshair, Grid, LogOut, Menu, Users } from 'react-feather';
+import { AuthenticityTokenInput } from 'remix-utils';
 import { ThemeToggler } from '~/components/ThemeToggler';
-import { authenticator } from '~/services/auth.server';
 
 type Props = {
   children: JSX.Element | JSX.Element[];
-};
-
-export const action = async ({ request }: ActionArgs) => {
-  await authenticator.logout(request, { redirectTo: '/login' });
 };
 
 export const PageLayout = ({ children }: Props) => (
@@ -33,6 +28,7 @@ export const PageLayout = ({ children }: Props) => (
               </li>
               <li>
                 <Form action="/logout" method="post">
+                  <AuthenticityTokenInput />
                   <button>
                     <LogOut size={20} />
                   </button>

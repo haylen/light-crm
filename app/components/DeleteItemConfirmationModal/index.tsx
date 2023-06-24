@@ -1,4 +1,5 @@
 import { Form } from '@remix-run/react';
+import { AuthenticityTokenInput } from 'remix-utils';
 import { Modal } from '~/components/Modal';
 import { ActionType } from '~/utils/consts/formActions';
 
@@ -27,6 +28,7 @@ export const DeleteItemConfirmationModal = ({
         <h3 className="font-bold text-lg">Delete confirmation</h3>
         <p className="py-4">Do you really want to delete this item?</p>
         <Form method="post">
+          <AuthenticityTokenInput />
           <input
             type="hidden"
             name="_method"
