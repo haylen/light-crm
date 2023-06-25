@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export type FormInput = z.infer<typeof LoginSchema>;
+
 export const LoginSchema = z.object({
   email: z.string().nonempty().email({
     message: 'Invalid email address',

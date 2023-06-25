@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export type FormInput = z.infer<typeof BrokerSchema>;
+
 export const BrokerSchema = z.object({
   name: z
     .string()

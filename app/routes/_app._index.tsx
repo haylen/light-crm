@@ -11,8 +11,8 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ user });
 };
 
-export const Index = () => {
-  const { user } = useLoaderData<typeof loader>();
+export const Route = () => {
+  const { user, log } = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -21,4 +21,4 @@ export const Index = () => {
   );
 };
 
-export default Index;
+export default Route;

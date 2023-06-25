@@ -11,7 +11,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ user });
 };
 
-export const DeliveryPlans = () => {
+export const Route = () => {
   const { user } = useLoaderData<typeof loader>();
 
   return (
@@ -22,4 +22,4 @@ export const DeliveryPlans = () => {
   );
 };
 
-export default DeliveryPlans;
+export default Route;

@@ -48,20 +48,20 @@ const Root = () => {
   const { csrf } = useLoaderData<LoaderData>();
 
   return (
-    <AuthenticityTokenProvider token={csrf}>
-      <html lang="en">
-        <head>
-          <Meta />
-          <Links />
-        </head>
-        <body>
+    <html lang="en">
+      <head>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <AuthenticityTokenProvider token={csrf}>
           <Outlet />
-          <ScrollRestoration />
-          <Scripts />
-          <LiveReload />
-        </body>
-      </html>
-    </AuthenticityTokenProvider>
+        </AuthenticityTokenProvider>
+        <ScrollRestoration />
+        <Scripts />
+        <LiveReload />
+      </body>
+    </html>
   );
 };
 

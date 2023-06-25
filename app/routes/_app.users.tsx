@@ -10,7 +10,7 @@ import {
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
-import { verifyAuthenticityToken } from 'remix-utils';
+import { namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -35,11 +35,7 @@ export const loader = async ({ request }: LoaderArgs) => {
     select: {
       id: true,
       email: true,
-      roles: {
-        select: {
-          role: true,
-        },
-      },
+      roles: { select: { role: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -48,11 +44,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 
   return json(
     { authenticatedUser, users, deleteUserAction },
-    {
-      headers: {
-        'Set-Cookie': await commitSession(session),
-      },
-    },
+    { headers: { 'Set-Cookie': await commitSession(session) } },
   );
 };
 
@@ -64,64 +56,57 @@ export const action = async ({ request }: ActionArgs) => {
     return redirect('/users');
   }
 
-  const form = await request.formData();
-  const method = form.get('_method');
-  let deleteAction: ActionData['deleteAction'];
+  const authenticatedUser = await authenticator.isAuthenticated(request, {
+    failureRedirect: '/login',
+  });
 
-  if (method === ActionType.DeleteItemConfirmation) {
-    const authenticatedUser = await authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    });
+  return namedAction(request, {
+    [ActionType.DeleteItemConfirmation]: async () => {
+      const form = await request.formData();
+      const userId = form.get('_itemId');
 
-    const userId = form.get('_itemId');
+      let deleteAction: ActionData['deleteAction'];
 
-    try {
-      if (userId === authenticatedUser.id) {
-        throw new Error('You cannot delete yourself!');
+      try {
+        if (userId === authenticatedUser.id) {
+          throw new Error('You cannot delete yourself!');
+        }
+
+        const parsedForm = DeleteItemConfirmationFormSchema.parse({
+          itemId: userId,
+        });
+        await db.user.delete({ where: { id: parsedForm.itemId } });
+
+        deleteAction = { isSuccessful: true };
+      } catch (error) {
+        deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
+      } finally {
+        const session = await getSession(request.headers.get('Cookie'));
+        session.flash(SessionFlashKey.DeleteUserMeta, deleteAction);
+
+        return redirect('/users', {
+          headers: {
+            'Set-Cookie': await commitSession(session),
+          },
+        });
       }
-
-      const parsedForm = DeleteItemConfirmationFormSchema.parse({
-        method,
-        itemId: userId,
-      });
-      await db.user.delete({ where: { id: parsedForm.itemId } });
-      deleteAction = { isSuccessful: true };
-    } catch (error) {
-      deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
-    } finally {
-      const session = await getSession(request.headers.get('Cookie'));
-      session.flash(SessionFlashKey.DeleteUserMeta, deleteAction);
-
-      return redirect('/users', {
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      });
-    }
-  }
-
-  return redirect('/users');
+    },
+  });
 };
 
-export const Users = () => {
+export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { authenticatedUser, users, deleteUserAction } =
     useLoaderData<typeof loader>();
   const [userIdToDelete, setUserIdToDelete] = useState<string>();
-
   const [deleteActionError, setDeleteActionError] = useState<
     string | undefined
   >();
 
   useEffect(() => {
-    if (deleteUserAction?.isSuccessful) {
-      setUserIdToDelete(undefined);
-    }
-
-    if (deleteUserAction?.error) {
-      setDeleteActionError(deleteUserAction.error);
-    }
+    if (deleteUserAction?.isSuccessful) setUserIdToDelete(undefined);
+    if (deleteUserAction?.error) setDeleteActionError(deleteUserAction.error);
   }, [deleteUserAction]);
 
   const handleNewUserClick = () => navigate('new');
@@ -130,13 +115,8 @@ export const Users = () => {
 
   const getOnDeleteClickHandler =
     (userId: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (event) {
-        event.stopPropagation();
-      }
-
-      if (['submitting', 'loading'].includes(navigation.state)) {
-        return;
-      }
+      if (event) event.stopPropagation();
+      if (['submitting', 'loading'].includes(navigation.state)) return;
 
       setUserIdToDelete(userId);
     };
@@ -177,7 +157,7 @@ export const Users = () => {
               <th></th>
               <th>Email</th>
               <th>Role</th>
-              <th />
+              <th className="w-24" />
             </tr>
           </thead>
           <tbody>
@@ -222,4 +202,4 @@ export const Users = () => {
   );
 };
 
-export default Users;
+export default Route;

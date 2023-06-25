@@ -12,12 +12,11 @@ import { clsx } from 'clsx';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { AuthenticityTokenInput, verifyAuthenticityToken } from 'remix-utils';
-import type { z } from 'zod';
+import type { FormInput } from '~/schemas/loginForm';
 import { LoginSchema } from '~/schemas/loginForm';
 import { authenticator } from '~/services/auth.server';
 import { getSession, sessionStorage } from '~/services/session.server';
 
-type FormInput = z.infer<typeof LoginSchema>;
 type LoaderError = { message: string } | null;
 
 export const action = async ({ request }: ActionArgs) => {
@@ -46,7 +45,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ error });
 };
 
-export default function Login() {
+export const Route = () => {
   const submit = useSubmit();
   const navigation = useNavigation();
   const { error } = useLoaderData<typeof loader>();
@@ -59,9 +58,7 @@ export default function Login() {
   });
 
   const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (!event) return;
-
-    submit(event.target, { replace: true });
+    if (event) submit(event.target, { replace: true });
   };
 
   return (
@@ -74,6 +71,7 @@ export default function Login() {
 
           <Form method="post" onSubmit={methods.handleSubmit(handleSubmit)}>
             <AuthenticityTokenInput />
+
             <div>
               <label htmlFor="email" className="label">
                 <span className="label-text">Email</span>
@@ -89,6 +87,7 @@ export default function Login() {
                 {...methods.register('email')}
               />
             </div>
+
             <p className="h-4 text-error text-xs mt-2 pl-1">
               {methods.formState.errors?.email?.message}
             </p>
@@ -108,6 +107,7 @@ export default function Login() {
                 {...methods.register('password')}
               />
             </div>
+
             <p className="h-4 text-error text-xs mt-2 pl-1">
               {methods.formState.errors?.password?.message}
             </p>
@@ -141,4 +141,6 @@ export default function Login() {
       </div>
     </div>
   );
-}
+};
+
+export default Route;

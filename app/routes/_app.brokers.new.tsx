@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ActionArgs } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
-import { json } from '@remix-run/node';
 import {
   useActionData,
   useNavigate,
@@ -10,45 +9,48 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { verifyAuthenticityToken } from 'remix-utils';
-import type { z } from 'zod';
+import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { BrokerForm } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
+import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
 import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
+import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
 type ActionData = {
   formError?: string;
 };
-type FormInput = z.infer<typeof BrokerSchema>;
-
-const badRequest = (data: ActionData) => json(data, { status: 400 });
 
 export const action = async ({ request }: ActionArgs) => {
-  try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
+  const session = await getSession(request.headers.get('Cookie'));
+  await verifyAuthenticityToken(request, session);
 
-    const form = await request.formData();
-    const name = form.get('name');
+  return namedAction(request, {
+    [ActionType.CreateBroker]: async () => {
+      try {
+        const form = await request.formData();
+        const name = form.get('name');
 
-    const parsedForm = BrokerSchema.parse({ name });
-    await db.broker.create({
-      data: {
-        name: parsedForm.name,
-      },
-    });
-    return redirect('/brokers');
-  } catch (error) {
-    return badRequest({
-      formError: SOMETHING_WENT_WRONG,
-    });
-  }
+        const parsedForm = BrokerSchema.parse({ name });
+        await db.broker.create({
+          data: {
+            name: parsedForm.name,
+          },
+        });
+
+        return redirect('/brokers');
+      } catch (error) {
+        return badRequest({
+          formError: SOMETHING_WENT_WRONG,
+        });
+      }
+    },
+  });
 };
 
-export const New = () => {
+export const Route = () => {
   const actionData = useActionData<ActionData>();
   const navigate = useNavigate();
   const navigation = useNavigation();
@@ -60,14 +62,10 @@ export const New = () => {
     },
   });
 
-  const handleCloseClick = () => {
-    navigate('/brokers');
-  };
+  const handleCloseClick = () => navigate('/brokers');
 
   const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (!event) return;
-
-    submit(event.target, { replace: true });
+    if (event) submit(event.target, { replace: true });
   };
 
   return (
@@ -83,13 +81,13 @@ export const New = () => {
           </label>
           <h3 className="font-bold text-lg mb-4">Create a new broker</h3>
           <BrokerForm
+            isNew
             isSubmitDisabled={
               (!methods.formState.isValid &&
                 methods.formState.submitCount !== 0) ||
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
-            submitLabel={'Create'}
             formError={actionData?.formError}
             formMethods={methods}
             onSubmit={methods.handleSubmit(handleSubmit)}
@@ -100,4 +98,4 @@ export const New = () => {
   );
 };
 
-export default New;
+export default Route;

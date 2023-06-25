@@ -12,14 +12,18 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { verifyAuthenticityToken } from 'remix-utils';
+import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { Modal } from '~/components/Modal';
 import { UserForm } from '~/components/UserForm';
 import type { FormInput } from '~/schemas/user';
 import { UpdateUserSchema } from '~/schemas/user';
 import { hashPassword } from '~/services/auth.server';
 import { getSession } from '~/services/session.server';
-import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
+import {
+  PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE,
+  SOMETHING_WENT_WRONG,
+} from '~/utils/consts/errors';
+import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
 type ActionData = {
@@ -32,8 +36,6 @@ type ActionData = {
   };
 };
 
-const badRequest = (data: ActionData) => json(data, { status: 400 });
-
 export const action = async ({ request, params }: ActionArgs) => {
   try {
     const session = await getSession(request.headers.get('Cookie'));
@@ -42,66 +44,66 @@ export const action = async ({ request, params }: ActionArgs) => {
     return redirect('/users');
   }
 
-  const form = await request.formData();
-  const email = form.get('email');
-  const roles = form.getAll('roles');
-  const password = form.get('password');
-  const passwordConfirmation = form.get('passwordConfirmation');
+  return namedAction(request, {
+    [ActionType.UpdateUser]: async () => {
+      const form = await request.formData();
+      const email = form.get('email');
+      const roles = form.getAll('roles');
+      const password = form.get('password');
+      const passwordConfirmation = form.get('passwordConfirmation');
 
-  try {
-    const parsedForm = UpdateUserSchema.parse({
-      email,
-      roles,
-      password,
-      passwordConfirmation,
-    });
+      try {
+        const parsedForm = UpdateUserSchema.parse({
+          email,
+          roles,
+          password,
+          passwordConfirmation,
+        });
 
-    const user = await db.user.findUniqueOrThrow({
-      select: {
-        roles: {
-          select: {
-            id: true,
+        const user = await db.user.findUniqueOrThrow({
+          select: { roles: { select: { id: true } } },
+          where: { id: params.userId },
+        });
+
+        const updatePasswordData: { passwordHash?: string } = {};
+
+        if (parsedForm.password) {
+          updatePasswordData.passwordHash = await hashPassword(
+            parsedForm.password,
+          );
+        }
+
+        await db.user.update({
+          where: { id: params.userId },
+          data: {
+            email: parsedForm.email,
+            ...updatePasswordData,
+            roles: {
+              deleteMany: { id: { in: user.roles.map(({ id }) => id) } },
+              createMany: {
+                data: parsedForm.roles.map((role) => ({ role })),
+              },
+            },
           },
-        },
-      },
-      where: { id: params.userId },
-    });
+        });
 
-    const updatePasswordData: { passwordHash?: string } = {};
+        return redirect('/users');
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE
+        ) {
+          return badRequest({
+            formError: 'A user with this email already exists',
+          });
+        }
 
-    if (parsedForm.password) {
-      updatePasswordData.passwordHash = await hashPassword(parsedForm.password);
-    }
-
-    await db.user.update({
-      where: { id: params.userId },
-      data: {
-        email: parsedForm.email,
-        ...updatePasswordData,
-        roles: {
-          deleteMany: { id: { in: user.roles.map(({ id }) => id) } },
-          createMany: {
-            data: parsedForm.roles.map((role) => ({ role })),
-          },
-        },
-      },
-    });
-
-    return redirect('/users');
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      return badRequest({
-        formError: 'A user with this email already exists',
-      });
-    }
-
-    return badRequest({
-      formError: SOMETHING_WENT_WRONG,
-    });
-  }
+        return badRequest({
+          formError: SOMETHING_WENT_WRONG,
+        });
+      }
+    },
+  });
 };
 
 export const loader = async ({ params }: LoaderArgs) => {
@@ -110,11 +112,7 @@ export const loader = async ({ params }: LoaderArgs) => {
       select: {
         id: true,
         email: true,
-        roles: {
-          select: {
-            role: true,
-          },
-        },
+        roles: { select: { role: true } },
       },
       where: { id: params.userId },
     });
@@ -125,7 +123,7 @@ export const loader = async ({ params }: LoaderArgs) => {
   }
 };
 
-export const UserView = () => {
+export const Route = () => {
   const actionData = useActionData<ActionData>();
   const { user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -145,9 +143,7 @@ export const UserView = () => {
   const handleCloseClick = () => navigate('/users');
 
   const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (!event) return;
-
-    submit(event.target, { replace: true });
+    if (event) submit(event.target, { replace: true });
   };
 
   return (
@@ -168,7 +164,6 @@ export const UserView = () => {
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
-            submitLabel={'Update'}
             formError={actionData?.formError}
             formMethods={methods}
             onSubmit={methods.handleSubmit(handleSubmit)}
@@ -179,4 +174,4 @@ export const UserView = () => {
   );
 };
 
-export default UserView;
+export default Route;

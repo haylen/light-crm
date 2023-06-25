@@ -11,13 +11,14 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { verifyAuthenticityToken } from 'remix-utils';
-import type { z } from 'zod';
+import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { BrokerForm } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
+import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
 import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
+import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
 type ActionData = {
@@ -27,33 +28,32 @@ type ActionData = {
   };
 };
 
-type FormInput = z.infer<typeof BrokerSchema>;
-
-const badRequest = (data: ActionData) => json(data, { status: 400 });
-
 export const action = async ({ request, params }: ActionArgs) => {
-  try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
+  const session = await getSession(request.headers.get('Cookie'));
+  await verifyAuthenticityToken(request, session);
 
-    const form = await request.formData();
-    const name = form.get('name');
+  return namedAction(request, {
+    [ActionType.UpdateBroker]: async () => {
+      try {
+        const form = await request.formData();
+        const name = form.get('name');
 
-    const parsedForm = BrokerSchema.parse({ name });
+        const parsedForm = BrokerSchema.parse({ name });
+        await db.broker.update({
+          where: { id: params.brokerId },
+          data: {
+            name: parsedForm.name,
+          },
+        });
 
-    await db.broker.update({
-      where: { id: params.brokerId },
-      data: {
-        name: parsedForm.name,
-      },
-    });
-
-    return redirect('/brokers');
-  } catch (error) {
-    return badRequest({
-      formError: SOMETHING_WENT_WRONG,
-    });
-  }
+        return redirect('/brokers');
+      } catch (error) {
+        return badRequest({
+          formError: SOMETHING_WENT_WRONG,
+        });
+      }
+    },
+  });
 };
 
 export const loader = async ({ params }: LoaderArgs) => {
@@ -68,7 +68,7 @@ export const loader = async ({ params }: LoaderArgs) => {
   }
 };
 
-export const BrokerView = () => {
+export const Route = () => {
   const actionData = useActionData<ActionData>();
   const { broker } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -84,9 +84,7 @@ export const BrokerView = () => {
   const handleCloseClick = () => navigate('/brokers');
 
   const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (!event) return;
-
-    submit(event.target, { replace: true });
+    if (event) submit(event.target, { replace: true });
   };
 
   return (
@@ -108,7 +106,6 @@ export const BrokerView = () => {
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
-            submitLabel={'Update'}
             formError={actionData?.formError}
             formMethods={methods}
             onSubmit={methods.handleSubmit(handleSubmit)}
@@ -119,4 +116,4 @@ export const BrokerView = () => {
   );
 };
 
-export default BrokerView;
+export default Route;

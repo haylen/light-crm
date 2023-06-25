@@ -8,7 +8,7 @@ import {
 } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
-import { verifyAuthenticityToken } from 'remix-utils';
+import { namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -46,55 +46,49 @@ export const action = async ({ request }: ActionArgs) => {
     return redirect('/brokers');
   }
 
-  const form = await request.formData();
-  const method = form.get('_method');
-  let deleteAction: ActionData['deleteAction'];
+  return namedAction(request, {
+    [ActionType.DeleteItemConfirmation]: async () => {
+      const form = await request.formData();
+      const brokerId = form.get('_itemId');
 
-  if (method === ActionType.DeleteItemConfirmation) {
-    const brokerId = form.get('_itemId');
+      let deleteAction: ActionData['deleteAction'];
 
-    try {
-      const parsedForm = DeleteItemConfirmationFormSchema.parse({
-        method,
-        itemId: brokerId,
-      });
-      await db.broker.delete({ where: { id: parsedForm.itemId } });
-      deleteAction = { isSuccessful: true };
-    } catch (error) {
-      deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
-    } finally {
-      const session = await getSession(request.headers.get('Cookie'));
-      session.flash(SessionFlashKey.DeleteBrokerMeta, deleteAction);
+      try {
+        const parsedForm = DeleteItemConfirmationFormSchema.parse({
+          itemId: brokerId,
+        });
+        await db.broker.delete({ where: { id: parsedForm.itemId } });
 
-      return redirect('/brokers', {
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      });
-    }
-  }
+        deleteAction = { isSuccessful: true };
+      } catch (error) {
+        deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
+      } finally {
+        const session = await getSession(request.headers.get('Cookie'));
+        session.flash(SessionFlashKey.DeleteBrokerMeta, deleteAction);
 
-  return redirect('/brokers');
+        return redirect('/brokers', {
+          headers: {
+            'Set-Cookie': await commitSession(session),
+          },
+        });
+      }
+    },
+  });
 };
 
-export const Brokers = () => {
+export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
   const { brokers, deleteBrokerAction } = useLoaderData<typeof loader>();
   const [brokerIdToDelete, setBrokerIdToDelete] = useState<string>();
-
   const [deleteActionError, setDeleteActionError] = useState<
     string | undefined
   >();
 
   useEffect(() => {
-    if (deleteBrokerAction?.isSuccessful) {
-      setBrokerIdToDelete(undefined);
-    }
-
-    if (deleteBrokerAction?.error) {
+    if (deleteBrokerAction?.isSuccessful) setBrokerIdToDelete(undefined);
+    if (deleteBrokerAction?.error)
       setDeleteActionError(deleteBrokerAction.error);
-    }
   }, [deleteBrokerAction]);
 
   const handleNewBrokerClick = () => navigate('new');
@@ -104,13 +98,8 @@ export const Brokers = () => {
 
   const getOnDeleteClickHandler =
     (brokerId: string) => (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (event) {
-        event.stopPropagation();
-      }
-
-      if (['submitting', 'loading'].includes(navigation.state)) {
-        return;
-      }
+      if (event) event.stopPropagation();
+      if (['submitting', 'loading'].includes(navigation.state)) return;
 
       setBrokerIdToDelete(brokerId);
     };
@@ -150,7 +139,7 @@ export const Brokers = () => {
             <tr>
               <th></th>
               <th>Name</th>
-              <th />
+              <th className="w-24" />
             </tr>
           </thead>
           <tbody>
@@ -179,4 +168,4 @@ export const Brokers = () => {
   );
 };
 
-export default Brokers;
+export default Route;

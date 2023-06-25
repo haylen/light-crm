@@ -2,24 +2,21 @@ import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
 import { AuthenticityTokenInput } from 'remix-utils';
-import type { z } from 'zod';
-import type { BrokerSchema } from '~/schemas/broker';
-
-type FormInput = z.infer<typeof BrokerSchema>;
+import type { FormInput } from '~/schemas/broker';
 
 type BrokerFormProps = {
+  isNew?: boolean;
   isSubmitDisabled: boolean;
   isSubmitting: boolean;
-  submitLabel: string;
   formError: string | undefined;
   formMethods: UseFormReturn<FormInput>;
   onSubmit: () => void;
 };
 
 export const BrokerForm = ({
+  isNew = false,
   isSubmitDisabled,
   isSubmitting,
-  submitLabel,
   formError,
   formMethods,
   onSubmit,
@@ -52,7 +49,7 @@ export const BrokerForm = ({
         disabled={isSubmitDisabled}
         className={`btn btn-block ${isSubmitting ? 'loading' : ''}`}
       >
-        {isSubmitting ? '' : submitLabel}
+        {isSubmitting ? '' : isNew ? 'Create' : 'Update'}
       </button>
     </div>
   </Form>
