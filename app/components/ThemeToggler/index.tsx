@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 
 const THEME_DARK = 'dark';
 const THEME_LIGHT = 'light';
-const THEME_LC_KEY = 'light-crm-theme';
+const THEME_LS_KEY = 'light-crm-theme';
 
 export const ThemeToggler = () => {
-  const [theme, setTheme] = useState(THEME_DARK);
+  const [theme, setTheme] = useState(THEME_LIGHT);
 
   useEffect(() => {
     const currentTheme =
-      window.localStorage.getItem(THEME_LC_KEY) || THEME_DARK;
+      window.localStorage.getItem(THEME_LS_KEY) || THEME_LIGHT;
     setTheme(currentTheme);
     document.querySelector('html')?.setAttribute('data-theme', currentTheme);
   }, []);
@@ -17,7 +17,7 @@ export const ThemeToggler = () => {
   const handleChangeClick = () => {
     const nextTheme = theme === THEME_DARK ? THEME_LIGHT : THEME_DARK;
     setTheme(nextTheme);
-    window.localStorage.setItem(THEME_LC_KEY, nextTheme);
+    window.localStorage.setItem(THEME_LS_KEY, nextTheme);
     document.querySelector('html')?.setAttribute('data-theme', nextTheme);
   };
 
