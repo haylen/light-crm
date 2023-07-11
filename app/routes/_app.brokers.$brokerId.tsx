@@ -23,9 +23,6 @@ import { db } from '~/utils/db.server';
 
 type ActionData = {
   formError?: string;
-  fieldErrors?: {
-    name: string | undefined;
-  };
 };
 
 export const action = async ({ request, params }: ActionArgs) => {
