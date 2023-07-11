@@ -23,6 +23,7 @@ export const BrokerForm = ({
 }: BrokerFormProps) => (
   <Form method="post" onSubmit={onSubmit}>
     <AuthenticityTokenInput />
+
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Name</span>
@@ -38,12 +39,15 @@ export const BrokerForm = ({
         {...formMethods.register('name')}
       />
     </div>
+
     <p className="h-4 text-error text-xs mt-2 pl-1">
       {formMethods.formState.errors?.name?.message}
     </p>
+
     <div className="mt-2 pl-1 h-8 flex items-center">
       {formError && <p className="text-error text-xs">{formError}</p>}
     </div>
+
     <div className="modal-action">
       <button
         disabled={isSubmitDisabled}

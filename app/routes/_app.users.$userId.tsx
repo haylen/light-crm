@@ -28,12 +28,6 @@ import { db } from '~/utils/db.server';
 
 type ActionData = {
   formError?: string;
-  fieldErrors?: {
-    email: string | undefined;
-    role: string | undefined;
-    password: string | undefined;
-    passwordConfirmation: string | undefined;
-  };
 };
 
 export const action = async ({ request, params }: ActionArgs) => {
