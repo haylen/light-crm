@@ -1,5 +1,13 @@
 import { Form, NavLink } from '@remix-run/react';
-import { Briefcase, Crosshair, Grid, LogOut, Menu, Users } from 'react-feather';
+import {
+  Briefcase,
+  Crosshair,
+  Filter,
+  Grid,
+  LogOut,
+  Menu,
+  Users,
+} from 'react-feather';
 import { AuthenticityTokenInput } from 'remix-utils';
 import { ThemeToggler } from '~/components/ThemeToggler';
 
@@ -83,6 +91,18 @@ export const PageLayout = ({ children }: Props) => (
             >
               <Crosshair size={20} />
               Delivery plans
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/funnels"
+              prefetch="intent"
+              className={({ isActive, isPending }) =>
+                isPending ? 'active' : isActive ? 'active' : ''
+              }
+            >
+              <Filter size={20} />
+              Funnels
             </NavLink>
           </li>
           <li>

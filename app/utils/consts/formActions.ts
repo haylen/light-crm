@@ -5,5 +5,8 @@ export enum ActionType {
   CreateBroker = 'CreateBroker',
   UpdateBroker = 'UpdateBroker',
 
+  CreateFunnel = 'CreateFunnel',
+  UpdateFunnel = 'UpdateFunnel',
+
   DeleteItemConfirmation = 'DeleteItemConfirmation',
 }
