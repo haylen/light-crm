@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
 import { namedAction, verifyAuthenticityToken } from 'remix-utils';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
+import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -134,35 +135,39 @@ export const Route = () => {
       )}
 
       <div className="overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Name</th>
-              <th className="w-24" />
-            </tr>
-          </thead>
-          <tbody>
-            {brokers.map((broker, index) => (
-              <tr
-                key={broker.id}
-                className="hover"
-                onClick={getOnBrokerClickHandler(broker.id)}
-              >
-                <th>{index + 1}</th>
-                <th>{broker.name}</th>
-                <th>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={getOnDeleteClickHandler(broker.id)}
-                  >
-                    <Trash size={20} />
-                  </button>
-                </th>
+        {brokers.length === 0 ? (
+          <NoRecordsPlaceholder />
+        ) : (
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Name</th>
+                <th className="w-24" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {brokers.map((broker, index) => (
+                <tr
+                  key={broker.id}
+                  className="hover"
+                  onClick={getOnBrokerClickHandler(broker.id)}
+                >
+                  <th>{index + 1}</th>
+                  <th>{broker.name}</th>
+                  <th>
+                    <button
+                      className="btn btn-ghost btn-xs"
+                      onClick={getOnDeleteClickHandler(broker.id)}
+                    >
+                      <Trash size={20} />
+                    </button>
+                  </th>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
