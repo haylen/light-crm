@@ -6,6 +6,7 @@ import {
   Grid,
   LogOut,
   Menu,
+  UploadCloud,
   Users,
 } from 'react-feather';
 import { AuthenticityTokenInput } from 'remix-utils';
@@ -115,6 +116,19 @@ export const PageLayout = ({ children }: Props) => (
             >
               <Users size={20} />
               Users
+            </NavLink>
+          </li>
+          <div className="divider">Connect</div>
+          <li>
+            <NavLink
+              to="/broker-integrations"
+              prefetch="intent"
+              className={({ isActive, isPending }) =>
+                isPending ? 'active' : isActive ? 'active' : ''
+              }
+            >
+              <UploadCloud size={20} />
+              Integrations
             </NavLink>
           </li>
         </ul>

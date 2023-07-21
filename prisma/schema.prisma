@@ -60,7 +60,7 @@ model Broker {
 model BrokerIntegration {
   id           String         @id @default(uuid())
   createdAt    DateTime       @default(now())
-  name         String
+  name         String         @unique
   DeliveryPlan DeliveryPlan[]
 }
 
