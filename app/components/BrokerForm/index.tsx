@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
 import { AuthenticityTokenInput } from 'remix-utils';
 import type { FormInput } from '~/schemas/broker';
+import { ActionType } from '~/utils/consts/formActions';
 
 type BrokerFormProps = {
   isNew?: boolean;
@@ -21,7 +22,11 @@ export const BrokerForm = ({
   formMethods,
   onSubmit,
 }: BrokerFormProps) => (
-  <Form method="post" onSubmit={onSubmit}>
+  <Form
+    method="post"
+    action={`?/${isNew ? ActionType.CreateBroker : ActionType.UpdateBroker}`}
+    onSubmit={onSubmit}
+  >
     <AuthenticityTokenInput />
 
     <div className="form-control w-full">
