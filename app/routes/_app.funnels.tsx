@@ -34,7 +34,7 @@ export const loader = async ({ request }: LoaderArgs) => {
     orderBy: { createdAt: 'desc' },
   });
   const session = await getSession(request.headers.get('Cookie'));
-  const deleteFunnelAction = session.get(SessionFlashKey.DeleteBrokerMeta);
+  const deleteFunnelAction = session.get(SessionFlashKey.DeleteFunnelMeta);
 
   return json({ authenticatedUser, funnels, deleteFunnelAction });
 };
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionArgs) => {
         deleteAction = { isSuccessful: false, error: SOMETHING_WENT_WRONG };
       } finally {
         const session = await getSession(request.headers.get('Cookie'));
-        session.flash(SessionFlashKey.DeleteBrokerMeta, deleteAction);
+        session.flash(SessionFlashKey.DeleteFunnelMeta, deleteAction);
 
         return redirect('/funnels', {
           headers: {
