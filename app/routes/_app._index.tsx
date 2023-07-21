@@ -12,7 +12,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 };
 
 export const Route = () => {
-  const { user, log } = useLoaderData<typeof loader>();
+  const { user } = useLoaderData<typeof loader>();
 
   return (
     <>
