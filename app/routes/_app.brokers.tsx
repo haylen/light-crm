@@ -31,6 +31,12 @@ export const loader = async ({ request }: LoaderArgs) => {
     failureRedirect: '/login',
   });
   const brokers = await db.broker.findMany({
+    select: {
+      id: true,
+      name: true,
+      managerPercentage: true,
+      manager: { select: { email: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
   const session = await getSession(request.headers.get('Cookie'));
@@ -143,6 +149,8 @@ export const Route = () => {
               <tr>
                 <th></th>
                 <th>Name</th>
+                <th>Manager</th>
+                <th>Manager %</th>
                 <th className="w-24" />
               </tr>
             </thead>
@@ -155,6 +163,8 @@ export const Route = () => {
                 >
                   <th>{index + 1}</th>
                   <th>{broker.name}</th>
+                  <th>{broker.manager ? broker.manager.email : null}</th>
+                  <th>{broker.manager ? broker.managerPercentage : null}</th>
                   <th>
                     <button
                       className="btn btn-ghost btn-xs"

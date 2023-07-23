@@ -53,7 +53,7 @@ model Broker {
   name              String
   manager           User?          @relation(fields: [managerId], references: [id], onDelete: SetNull)
   managerId         String?
-  managerPercentage Float?         @db.DoublePrecision
+  managerPercentage Float          @default(0) @db.DoublePrecision
   deliveryPlans     DeliveryPlan[]
 }
 

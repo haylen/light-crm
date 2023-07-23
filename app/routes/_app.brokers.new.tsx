@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { ActionArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import {
   useActionData,
+  useLoaderData,
   useNavigate,
   useNavigation,
   useSubmit,
@@ -10,7 +11,7 @@ import {
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
-import { BrokerForm } from '~/components/BrokerForm';
+import { BrokerForm, EMPTY_MANAGER_SELECTION } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
@@ -23,6 +24,19 @@ type ActionData = {
   formError?: string;
 };
 
+export const loader = async () => {
+  try {
+    const users = await db.user.findMany({
+      select: { id: true, email: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return json({ users });
+  } catch (error) {
+    return redirect('/brokers');
+  }
+};
+
 export const action = async ({ request }: ActionArgs) => {
   const session = await getSession(request.headers.get('Cookie'));
   await verifyAuthenticityToken(request, session);
@@ -32,11 +46,20 @@ export const action = async ({ request }: ActionArgs) => {
       try {
         const form = await request.formData();
         const name = form.get('name');
+        const managerId = form.get('managerId');
+        const managerPercentage = form.get('managerPercentage');
 
-        const parsedForm = BrokerSchema.parse({ name });
+        const parsedForm = BrokerSchema.parse({
+          name,
+          managerId:
+            managerId === EMPTY_MANAGER_SELECTION ? undefined : managerId,
+          managerPercentage,
+        });
         await db.broker.create({
           data: {
             name: parsedForm.name,
+            managerId: parsedForm.managerId,
+            managerPercentage: parsedForm.managerPercentage,
           },
         });
 
@@ -52,6 +75,7 @@ export const action = async ({ request }: ActionArgs) => {
 
 export const Route = () => {
   const actionData = useActionData<ActionData>();
+  const { users } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -59,6 +83,8 @@ export const Route = () => {
     resolver: zodResolver(BrokerSchema),
     defaultValues: {
       name: '',
+      managerId: undefined,
+      managerPercentage: 0,
     },
   });
 
@@ -91,6 +117,7 @@ export const Route = () => {
             formError={actionData?.formError}
             formMethods={methods}
             onSubmit={methods.handleSubmit(handleSubmit)}
+            availableManagers={users}
           />
         </div>
       </div>

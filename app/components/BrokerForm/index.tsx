@@ -1,9 +1,11 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
-import type { UseFormReturn } from 'react-hook-form';
+import { type UseFormReturn } from 'react-hook-form';
 import { AuthenticityTokenInput } from 'remix-utils';
 import type { FormInput } from '~/schemas/broker';
 import { ActionType } from '~/utils/consts/formActions';
+
+export const EMPTY_MANAGER_SELECTION = 'none';
 
 type BrokerFormProps = {
   isNew?: boolean;
@@ -12,6 +14,7 @@ type BrokerFormProps = {
   formError: string | undefined;
   formMethods: UseFormReturn<FormInput>;
   onSubmit: () => void;
+  availableManagers: { id: string; email: string }[];
 };
 
 export const BrokerForm = ({
@@ -21,6 +24,7 @@ export const BrokerForm = ({
   formError,
   formMethods,
   onSubmit,
+  availableManagers,
 }: BrokerFormProps) => (
   <Form
     method="post"
@@ -48,6 +52,48 @@ export const BrokerForm = ({
     <p className="h-4 text-error text-xs mt-2 pl-1">
       {formMethods.formState.errors?.name?.message}
     </p>
+
+    <div className="form-control w-full">
+      <label className="label">
+        <span className="label-text">Manager % (0% - 100%) </span>
+      </label>
+      <input
+        type="number"
+        step="0.01"
+        id="managerPercentage"
+        placeholder="Manager %"
+        className={clsx(
+          'input input-bordered w-full',
+          formMethods.formState.errors?.managerPercentage?.message &&
+            'input-error',
+        )}
+        {...formMethods.register('managerPercentage', {
+          setValueAs: (v) => (v === '' ? undefined : Number(v)),
+        })}
+      />
+    </div>
+
+    <p className="h-4 text-error text-xs mt-2 pl-1">
+      {formMethods.formState.errors?.managerPercentage?.message}
+    </p>
+
+    <div className="form-control w-full">
+      <label className="label">
+        <span className="label-text">Manager</span>
+      </label>
+      <select
+        id="managerId"
+        className="select select-bordered w-full text-base font-normal"
+        {...formMethods.register('managerId')}
+      >
+        <option value={EMPTY_MANAGER_SELECTION}>None</option>
+        {availableManagers.map((manager) => (
+          <option key={manager.id} value={manager.id}>
+            {manager.email}
+          </option>
+        ))}
+      </select>
+    </div>
 
     <div className="mt-2 pl-1 h-8 flex items-center">
       {formError && <p className="text-error text-xs">{formError}</p>}
