@@ -89,7 +89,7 @@ export const Route = () => {
       name: funnel.name,
       websiteUrl: funnel.websiteUrl,
       country: funnel.country as Country,
-      language: funnel.language,
+      language: funnel.language ? (funnel.language as Country) : undefined,
     },
   });
 

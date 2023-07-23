@@ -71,24 +71,22 @@ export const FunnelForm = ({
       {formMethods.formState.errors?.websiteUrl?.message}
     </p>
 
-    <div className="">
-      <Controller
-        name="country"
-        control={formMethods.control}
-        render={({ field, fieldState }) => (
-          <CountryAutocompleteDropdown
-            label="Country"
-            placeholder="Choose a country code"
-            inputName={field.name}
-            selectedItem={field.value}
-            errorMessage={fieldState.error?.message}
-            onChange={(selectedItem: string | undefined) =>
-              field.onChange(selectedItem)
-            }
-          />
-        )}
-      />
-    </div>
+    <Controller
+      name="country"
+      control={formMethods.control}
+      render={({ field, fieldState }) => (
+        <CountryAutocompleteDropdown
+          label="Country"
+          placeholder="Choose a country code"
+          inputName={field.name}
+          selectedItem={field.value}
+          errorMessage={fieldState.error?.message}
+          onChange={(selectedItem: string | undefined) =>
+            field.onChange(selectedItem)
+          }
+        />
+      )}
+    />
 
     <div className="mb-40">
       <Controller
