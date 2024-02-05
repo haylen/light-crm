@@ -1,4 +1,5 @@
 import { Form, NavLink } from '@remix-run/react';
+import { type PropsWithChildren } from 'react';
 import {
   Briefcase,
   Crosshair,
@@ -12,11 +13,7 @@ import {
 import { AuthenticityTokenInput } from 'remix-utils';
 import { ThemeToggler } from '~/components/ThemeToggler';
 
-type Props = {
-  children: JSX.Element | JSX.Element[];
-};
-
-export const PageLayout = ({ children }: Props) => (
+export const PageLayout = ({ children }: PropsWithChildren) => (
   <div className="bg-base-300">
     <div className="drawer drawer-mobile">
       <input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
