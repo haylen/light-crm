@@ -8,6 +8,9 @@ export enum ActionType {
   CreateBrokerIntegration = 'CreateBrokerIntegration',
   UpdateBrokerIntegration = 'UpdateBrokerIntegration',
 
+  CreateDeliveryPlan = 'CreateDeliveryPlan',
+  UpdateDeliveryPlan = 'UpdateDeliveryPlan',
+
   CreateFunnel = 'CreateFunnel',
   UpdateFunnel = 'UpdateFunnel',
 

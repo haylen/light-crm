@@ -77,26 +77,27 @@ model Funnel {
 }
 
 model DeliveryPlan {
-  id                  String             @id @default(uuid())
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  name                String
-  broker              Broker             @relation(fields: [brokerId], references: [id], onDelete: Cascade)
-  brokerId            String
-  brokerIntegration   BrokerIntegration? @relation(fields: [brokerIntegrationId], references: [id], onDelete: SetNull)
-  brokerIntegrationId String?
-  funnel              Funnel?            @relation(fields: [funnelId], references: [id], onDelete: SetNull)
-  funnelId            String?
-  buyPrice            Float
-  sellPrice           Float
-  dailyCap            Int                @db.SmallInt
-  totalCap            Int                @db.SmallInt
-  startDate           DateTime           @db.Date
-  endDate             DateTime           @db.Date
-  workHoursStart      DateTime           @db.Time
-  workHoursEnd        DateTime           @db.Time
-  timezone            Int                @db.SmallInt
-  paymentType         PaymentType
+  id                    String             @id @default(uuid())
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  name                  String
+  broker                Broker             @relation(fields: [brokerId], references: [id], onDelete: Cascade)
+  brokerId              String
+  brokerIntegration     BrokerIntegration? @relation(fields: [brokerIntegrationId], references: [id], onDelete: SetNull)
+  brokerIntegrationId   String?
+  funnel                Funnel?            @relation(fields: [funnelId], references: [id], onDelete: SetNull)
+  funnelId              String?
+  buyPrice              Float
+  sellPrice             Float
+  dailyCap              Int?               @db.SmallInt
+  totalCap              Int?               @db.SmallInt
+  startDate             DateTime           @db.Date
+  endDate               DateTime           @db.Date
+  startEndDatesTimezone Int                @db.SmallInt
+  workHoursStart        DateTime?          @db.Time
+  workHoursEnd          DateTime?          @db.Time
+  workHoursTimezone     Int?               @db.SmallInt
+  paymentType           PaymentType
 }
 
 model Lead {

@@ -3,3 +3,5 @@ export const PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE = 'P2002';
 
 export const SOMETHING_WENT_WRONG =
   'Something went wrong. Please try again later';
+
+export const REQUIRED_FIELD = 'This field is required';

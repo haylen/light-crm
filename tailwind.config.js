@@ -1,11 +1,15 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./app/**/*.{js,jsx,ts,tsx}'],
+export default {
+  content: [
+    './app/**/*.{js,jsx,ts,tsx}',
+    './node_modules/tailwind-datepicker-react/dist/**/*.js' /* Styles for the datepicker */,
+  ],
+  daisyui: {
+    themes: ['light', 'dark'],
+  },
+  darkMode: ['class', '[data-theme="dark"]'],
+  plugins: [require('daisyui')],
   theme: {
     extend: {},
-  },
-  plugins: [require('daisyui')],
-  daisyui: {
-    themes: ['dark', 'light'],
   },
 };
