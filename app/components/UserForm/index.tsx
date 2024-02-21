@@ -1,7 +1,6 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
-import { AuthenticityTokenInput } from 'remix-utils';
 import type { FormInput } from '~/schemas/user';
 import { ActionType } from '~/utils/consts/formActions';
 import { AVAILABLE_ROLES } from '~/utils/consts/users';
@@ -28,8 +27,6 @@ export const UserForm = ({
     action={`?/${isNew ? ActionType.CreateUser : ActionType.UpdateUser}`}
     onSubmit={onSubmit}
   >
-    <AuthenticityTokenInput />
-
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Email</span>

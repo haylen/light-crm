@@ -1,9 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  json,
+} from '@remix-run/node';
 import {
   Form,
+  useActionData,
   useLoaderData,
   useNavigation,
   useSubmit,
@@ -11,21 +14,29 @@ import {
 import { clsx } from 'clsx';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { AuthenticityTokenInput, verifyAuthenticityToken } from 'remix-utils';
+import { AuthenticityTokenInput } from 'remix-utils/csrf/react';
+import { CSRFError } from 'remix-utils/csrf/server';
 import { ThemeToggler } from '~/components/ThemeToggler';
 import type { FormInput } from '~/schemas/loginForm';
 import { LoginSchema } from '~/schemas/loginForm';
 import { authenticator } from '~/services/auth.server';
-import { getSession, sessionStorage } from '~/services/session.server';
+import { sessionStorage } from '~/services/session.server';
+import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
+import { csrf } from '~/utils/csrf.server';
 
 type LoaderError = { message: string } | null;
+type ActionData = { formError?: string };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
-  } catch {
-    return redirect('/login');
+    await csrf.validate(request);
+  } catch (error) {
+    if (error instanceof CSRFError) {
+      // TODO: Report CSRF error
+      return json({ formError: SOMETHING_WENT_WRONG }, 403);
+    } else {
+      throw error;
+    }
   }
 
   await authenticator.authenticate('form', request, {
@@ -34,7 +45,7 @@ export const action = async ({ request }: ActionArgs) => {
   });
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticator.isAuthenticated(request, {
     successRedirect: '/',
   });
@@ -49,6 +60,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 export const Route = () => {
   const submit = useSubmit();
   const navigation = useNavigation();
+  const actionData = useActionData<ActionData>();
   const { error } = useLoaderData<typeof loader>();
   const methods = useForm<FormInput>({
     resolver: zodResolver(LoginSchema),
@@ -57,6 +69,8 @@ export const Route = () => {
       password: '',
     },
   });
+
+  const formErrorMessage = actionData?.formError || error?.message;
 
   const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
     if (event) submit(event.target, { replace: true });
@@ -122,8 +136,8 @@ export const Route = () => {
               </p>
 
               <div className="mt-2 pl-1 h-8 flex items-center">
-                {methods.formState.submitCount !== 0 && error?.message && (
-                  <p className="text-error text-xs">{error?.message}</p>
+                {methods.formState.submitCount !== 0 && formErrorMessage && (
+                  <p className="text-error text-xs">{formErrorMessage}</p>
                 )}
               </div>
 
@@ -134,11 +148,11 @@ export const Route = () => {
                       methods.formState.submitCount !== 0) ||
                     ['submitting', 'loading'].includes(navigation.state)
                   }
-                  className={`btn btn-accent btn-block ${
-                    ['submitting', 'loading'].includes(navigation.state)
-                      ? 'loading'
-                      : ''
-                  }`}
+                  className={clsx(
+                    'btn btn-accent btn-block',
+                    ['submitting', 'loading'].includes(navigation.state) &&
+                      'loading',
+                  )}
                 >
                   {['submitting', 'loading'].includes(navigation.state)
                     ? ''

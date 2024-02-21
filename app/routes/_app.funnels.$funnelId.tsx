@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import {
   useActionData,
   useLoaderData,
@@ -11,12 +10,11 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { FunnelForm } from '~/components/FunnelForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/funnel';
 import { FunnelSchema } from '~/schemas/funnel';
-import { getSession } from '~/services/session.server';
 import type { Country } from '~/utils/consts/countries';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
@@ -26,10 +24,7 @@ type ActionData = {
   formError?: string;
 };
 
-export const action = async ({ request, params }: ActionArgs) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  await verifyAuthenticityToken(request, session);
-
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateFunnel]: async () => {
       try {
@@ -57,15 +52,13 @@ export const action = async ({ request, params }: ActionArgs) => {
 
         return redirect('/funnels');
       } catch (error) {
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });
 };
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   try {
     const funnel = await db.funnel.findUniqueOrThrow({
       where: { id: params.funnelId },

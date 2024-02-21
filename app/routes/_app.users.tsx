@@ -1,5 +1,5 @@
 import { UserRole } from '@prisma/client';
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import {
   Outlet,
@@ -10,7 +10,7 @@ import {
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
-import { namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -27,7 +27,7 @@ type ActionData = {
   };
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authenticatedUser = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -48,14 +48,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   );
 };
 
-export const action = async ({ request }: ActionArgs) => {
-  try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
-  } catch {
-    return redirect('/users');
-  }
-
+export const action = async ({ request }: ActionFunctionArgs) => {
   const authenticatedUser = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });

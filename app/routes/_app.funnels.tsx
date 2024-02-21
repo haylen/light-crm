@@ -1,4 +1,4 @@
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import {
   Outlet,
@@ -8,7 +8,7 @@ import {
 } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
-import { namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
@@ -26,7 +26,7 @@ type ActionData = {
   };
 };
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const authenticatedUser = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   });
@@ -39,14 +39,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ authenticatedUser, funnels, deleteFunnelAction });
 };
 
-export const action = async ({ request }: ActionArgs) => {
-  try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
-  } catch {
-    return redirect('/funnels');
-  }
-
+export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.DeleteItemConfirmation]: async () => {
       const form = await request.formData();

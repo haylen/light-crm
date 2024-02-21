@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import {
   useActionData,
@@ -10,12 +10,11 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { BrokerForm, EMPTY_MANAGER_SELECTION } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
-import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
@@ -37,10 +36,7 @@ export const loader = async () => {
   }
 };
 
-export const action = async ({ request }: ActionArgs) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  await verifyAuthenticityToken(request, session);
-
+export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateBroker]: async () => {
       try {
@@ -65,9 +61,7 @@ export const action = async ({ request }: ActionArgs) => {
 
         return redirect('/brokers');
       } catch (error) {
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });
@@ -84,7 +78,7 @@ export const Route = () => {
     defaultValues: {
       name: '',
       managerId: undefined,
-      managerPercentage: 0,
+      managerPercentage: undefined,
     },
   });
 

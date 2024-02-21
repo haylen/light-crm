@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Prisma } from '@prisma/client';
-import type { ActionArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import {
   useActionData,
   useNavigate,
@@ -10,13 +10,12 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { Modal } from '~/components/Modal';
 import { UserForm } from '~/components/UserForm';
 import type { FormInput } from '~/schemas/user';
 import { CreateUserSchema } from '~/schemas/user';
 import { hashPassword } from '~/services/auth.server';
-import { getSession } from '~/services/session.server';
 import {
   PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE,
   SOMETHING_WENT_WRONG,
@@ -28,14 +27,7 @@ type ActionData = {
   formError?: string;
 };
 
-export const action = async ({ request }: ActionArgs) => {
-  try {
-    const session = await getSession(request.headers.get('Cookie'));
-    await verifyAuthenticityToken(request, session);
-  } catch {
-    return redirect('/users');
-  }
-
+export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateUser]: async () => {
       const form = await request.formData();
@@ -70,14 +62,13 @@ export const action = async ({ request }: ActionArgs) => {
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE
         ) {
-          return badRequest({
-            formError: 'A user with this email already exists',
-          });
+          return json(
+            { formError: 'A user with this email already exists' },
+            409,
+          );
         }
 
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });

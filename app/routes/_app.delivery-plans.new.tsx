@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import {
   useActionData,
@@ -10,12 +10,11 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { DeliveryPlanForm } from '~/components/DeliveryPlanForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/deliveryPlan';
 import { DeliveryPlanSchema } from '~/schemas/deliveryPlan';
-import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { getCurrentTimezone } from '~/utils/dates';
@@ -52,10 +51,7 @@ export const loader = async () => {
   }
 };
 
-export const action = async ({ request }: ActionArgs) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  await verifyAuthenticityToken(request, session);
-
+export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateDeliveryPlan]: async () => {
       try {
@@ -88,9 +84,7 @@ export const action = async ({ request }: ActionArgs) => {
 
         return redirect('/delivery-plans');
       } catch (error) {
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });

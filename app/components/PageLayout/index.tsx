@@ -10,7 +10,6 @@ import {
   UploadCloud,
   Users,
 } from 'react-feather';
-import { AuthenticityTokenInput } from 'remix-utils';
 import { ThemeToggler } from '~/components/ThemeToggler';
 
 export const PageLayout = ({ children }: PropsWithChildren) => (
@@ -34,7 +33,6 @@ export const PageLayout = ({ children }: PropsWithChildren) => (
               </li>
               <li>
                 <Form action="/logout" method="post">
-                  <AuthenticityTokenInput />
                   <button>
                     <LogOut size={20} />
                   </button>
@@ -46,7 +44,7 @@ export const PageLayout = ({ children }: PropsWithChildren) => (
         <div className="container mx-auto py-10 px-5 flex-grow">{children}</div>
         <footer className="footer footer-center p-4 bg-base-300 text-base-content">
           <div>
-            <p>Copyright © 2023 - All rights reserved by Light CRM</p>
+            <p>Copyright © 2024 - All rights reserved by Light CRM</p>
           </div>
         </footer>
       </div>

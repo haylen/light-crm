@@ -1,47 +1,40 @@
-import type {
-  LinksFunction,
-  LoaderFunction,
-  MetaFunction,
-} from '@remix-run/node';
+import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react';
-import {
-  AuthenticityTokenProvider,
-  createAuthenticityToken,
-} from 'remix-utils';
+import { AuthenticityTokenProvider } from 'remix-utils/csrf/react';
 import { commitSession, getSession } from '~/services/session.server';
-import stylesheet from '~/tailwind.css';
+import '~/tailwind.css';
+import { csrf } from '~/utils/csrf.server';
 
 type LoaderData = {
   csrf: string;
 };
 
-export const links: LinksFunction = () => [
-  { rel: 'stylesheet', href: stylesheet },
+export const meta: MetaFunction = () => [
+  { title: 'Light' },
+  { name: 'charset', content: 'utf-8' },
+  { name: 'viewport', content: 'width=device-width,initial-scale=1' },
 ];
 
-export const meta: MetaFunction = () => ({
-  charset: 'utf-8',
-  title: 'Light',
-  viewport: 'width=device-width,initial-scale=1',
-});
-
 export const loader: LoaderFunction = async ({ request }) => {
+  const [token, cookieHeader] = await csrf.commitToken();
   const session = await getSession(request.headers.get('Cookie'));
-  const token = createAuthenticityToken(session);
 
-  return json<LoaderData>(
-    { csrf: token },
-    { headers: { 'Set-Cookie': await commitSession(session) } },
-  );
+  const headers = new Headers();
+
+  if (cookieHeader) {
+    headers.append('Set-Cookie', cookieHeader);
+  }
+  headers.append('Set-Cookie', await commitSession(session));
+
+  return json<LoaderData>({ csrf: token }, { headers });
 };
 
 const Root = () => {
@@ -59,7 +52,6 @@ const Root = () => {
         </AuthenticityTokenProvider>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );

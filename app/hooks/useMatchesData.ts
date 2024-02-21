@@ -5,11 +5,9 @@ import { useMemo } from 'react';
  * This base hook is used in other hooks to quickly search for specific data
  * across all loader data using useMatches.
  * @param {string} id The route id
- * @returns {JSON | undefined} The router data or undefined if not found
+ * @returns {T | undefined} The router data or undefined if not found
  */
-export const useMatchesData = (
-  id: string,
-): Record<string, unknown> | undefined => {
+export const useMatchesData = <T>(id: string): T | undefined => {
   const matchingRoutes = useMatches();
 
   const route = useMemo(
@@ -17,5 +15,9 @@ export const useMatchesData = (
     [matchingRoutes, id],
   );
 
-  return route?.data;
+  if (!route || !route.data) {
+    return undefined;
+  }
+
+  return route.data as T;
 };

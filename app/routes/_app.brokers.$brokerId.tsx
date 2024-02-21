@@ -1,7 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  json,
+  redirect,
+} from '@remix-run/node';
 import {
   useActionData,
   useLoaderData,
@@ -11,12 +14,11 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { BrokerForm, EMPTY_MANAGER_SELECTION } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
-import { getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
@@ -25,10 +27,7 @@ type ActionData = {
   formError?: string;
 };
 
-export const action = async ({ request, params }: ActionArgs) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  await verifyAuthenticityToken(request, session);
-
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateBroker]: async () => {
       try {
@@ -54,15 +53,13 @@ export const action = async ({ request, params }: ActionArgs) => {
 
         return redirect('/brokers');
       } catch (error) {
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });
 };
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   try {
     const broker = await db.broker.findUniqueOrThrow({
       where: { id: params.brokerId },

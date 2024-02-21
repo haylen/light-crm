@@ -1,6 +1,5 @@
 import { Form } from '@remix-run/react';
 import { type UseFormReturn } from 'react-hook-form';
-import { AuthenticityTokenInput } from 'remix-utils';
 import { CurrentTimezoneLabel } from '~/components/DeliveryPlanForm/CurrentTimezoneLabel';
 import { BrokerInput } from '~/components/DeliveryPlanForm/inputs/BrokerInput';
 import { BuyPriceInput } from '~/components/DeliveryPlanForm/inputs/BuyPriceInput';
@@ -45,8 +44,6 @@ export const DeliveryPlanForm = ({
     method="post"
     action={`?/${ActionType.CreateDeliveryPlan}`}
   >
-    <AuthenticityTokenInput />
-
     <NameInput formMethods={formMethods} />
 
     <div className="flex max-md:flex-col">

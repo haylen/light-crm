@@ -1,8 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Prisma } from '@prisma/client';
-import type { ActionArgs, LoaderArgs } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  json,
+  redirect,
+} from '@remix-run/node';
 import {
   useActionData,
   useLoaderData,
@@ -12,12 +15,11 @@ import {
 } from '@remix-run/react';
 import type { SubmitHandler } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
-import { badRequest, namedAction, verifyAuthenticityToken } from 'remix-utils';
+import { namedAction } from 'remix-utils/named-action';
 import { BrokerIntegrationForm } from '~/components/BrokerIntegrationForm';
 import { Modal } from '~/components/Modal';
 import type { FormInput } from '~/schemas/brokerIntegration';
 import { BrokerIntegrationSchema } from '~/schemas/brokerIntegration';
-import { getSession } from '~/services/session.server';
 import {
   PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE,
   SOMETHING_WENT_WRONG,
@@ -29,10 +31,7 @@ type ActionData = {
   formError?: string;
 };
 
-export const action = async ({ request, params }: ActionArgs) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  await verifyAuthenticityToken(request, session);
-
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateBrokerIntegration]: async () => {
       try {
@@ -53,20 +52,19 @@ export const action = async ({ request, params }: ActionArgs) => {
           error instanceof Prisma.PrismaClientKnownRequestError &&
           error.code === PRISMA_UNIQUENESS_CONSTRAINT_ERROR_CODE
         ) {
-          return badRequest({
-            formError: 'An integration with this name already exists',
-          });
+          return json(
+            { formError: 'An integration with this name already exists' },
+            409,
+          );
         }
 
-        return badRequest({
-          formError: SOMETHING_WENT_WRONG,
-        });
+        return json({ formError: SOMETHING_WENT_WRONG }, 500);
       }
     },
   });
 };
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params }: LoaderFunctionArgs) => {
   try {
     const brokerIntegration = await db.brokerIntegration.findUniqueOrThrow({
       where: { id: params.brokerIntegrationId },

@@ -6,7 +6,7 @@ const isUser = (user: any): user is User => {
 };
 
 export const useOptionalAuthenticatedUser = (): User | undefined => {
-  const data = useMatchesData('root');
+  const data = useMatchesData<{ authenticatedUser?: User }>('root');
 
   if (!data || !isUser(data.authenticatedUser)) {
     return undefined;
