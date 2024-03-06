@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 type ModalSubmitButtonProps = {
   isDisabled: boolean;
   isSubmitting: boolean;
@@ -12,7 +14,7 @@ export const ModalSubmitButton = ({
   <div className="modal-action">
     <button
       disabled={isDisabled}
-      className={`btn btn-block ${isSubmitting ? 'loading' : ''}`}
+      className={clsx('btn btn-block', isSubmitting && 'loading')}
     >
       {isSubmitting ? '' : label}
     </button>
