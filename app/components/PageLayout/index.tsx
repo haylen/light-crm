@@ -75,7 +75,6 @@ export const PageLayout = ({ children }: PropsWithChildren) => (
               <Briefcase size={20} />
               Brokers
             </NavLink>
-            <link rel="prefetch" href="/brokers" />
           </li>
           <li>
             <NavLink
