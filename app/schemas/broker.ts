@@ -12,5 +12,5 @@ export const BrokerSchema = z.object({
     .min(0, { message: 'The percentage must be at least 0' })
     .max(100, { message: 'The percentage must be max 100' })
     .optional(),
-  managerId: z.string().optional(),
+  managerId: z.string().nullable(),
 });

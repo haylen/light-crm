@@ -10,45 +10,36 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-  useSubmit,
 } from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
-import { BrokerForm, EMPTY_MANAGER_SELECTION } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
-import type { FormInput } from '~/schemas/broker';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { BrokerForm } from '~/components/forms/BrokerForm';
+import { type FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(BrokerSchema);
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateBroker]: async () => {
       try {
-        const form = await request.formData();
-        const name = form.get('name');
-        const managerId = form.get('managerId');
-        const managerPercentage = Number(form.get('managerPercentage'));
+        const { errors, data } = await getValidatedFormData<FormInput>(
+          request,
+          formResolver,
+        );
 
-        const parsedForm = BrokerSchema.parse({
-          name,
-          managerId:
-            managerId === EMPTY_MANAGER_SELECTION ? undefined : managerId,
-          managerPercentage,
-        });
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
+
         await db.broker.update({
           where: { id: params.brokerId },
-          data: {
-            name: parsedForm.name,
-            managerId: parsedForm.managerId || null,
-            managerPercentage: parsedForm.managerPercentage,
-          },
+          data: data,
         });
 
         return redirect('/brokers');
@@ -77,48 +68,40 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const { broker, users } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const methods = useForm<FormInput>({
-    resolver: zodResolver(BrokerSchema),
+  const methods = useRemixForm<FormInput>({
+    resolver: formResolver,
     defaultValues: {
       name: broker.name,
-      managerId: broker.managerId || EMPTY_MANAGER_SELECTION,
-      managerPercentage: broker.managerPercentage || undefined,
+      managerId: broker.managerId,
+      managerPercentage: broker.managerPercentage,
+    },
+    submitConfig: {
+      action: `?/${ActionType.UpdateBroker}`,
     },
   });
 
   const handleCloseClick = () => navigate('/brokers');
 
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
-
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">View the broker</h3>
           <BrokerForm
+            submitLabel="Update"
             isSubmitDisabled={
               !methods.formState.isDirty ||
-              !methods.formState.isValid ||
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
             availableManagers={users}
           />
         </div>

@@ -8,20 +8,18 @@ import {
   useNavigation,
   useSubmit,
 } from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
-import { BrokerForm, EMPTY_MANAGER_SELECTION } from '~/components/BrokerForm';
 import { Modal } from '~/components/Modal';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { BrokerForm } from '~/components/forms/BrokerForm';
 import type { FormInput } from '~/schemas/broker';
 import { BrokerSchema } from '~/schemas/broker';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(BrokerSchema);
 
 export const loader = async () => {
   try {
@@ -40,24 +38,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateBroker]: async () => {
       try {
-        const form = await request.formData();
-        const name = form.get('name');
-        const managerId = form.get('managerId');
-        const managerPercentage = form.get('managerPercentage');
+        const { errors, data } = await getValidatedFormData<FormInput>(
+          request,
+          formResolver,
+        );
 
-        const parsedForm = BrokerSchema.parse({
-          name,
-          managerId:
-            managerId === EMPTY_MANAGER_SELECTION ? undefined : managerId,
-          managerPercentage,
-        });
-        await db.broker.create({
-          data: {
-            name: parsedForm.name,
-            managerId: parsedForm.managerId,
-            managerPercentage: parsedForm.managerPercentage,
-          },
-        });
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
+
+        await db.broker.create({ data });
 
         return redirect('/brokers');
       } catch (error) {
@@ -68,49 +58,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const { users } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
   const submit = useSubmit();
-  const methods = useForm<FormInput>({
+  const methods = useRemixForm<FormInput>({
     resolver: zodResolver(BrokerSchema),
     defaultValues: {
       name: '',
       managerId: undefined,
-      managerPercentage: undefined,
+      managerPercentage: 0,
+    },
+    submitConfig: {
+      action: `?/${ActionType.CreateBroker}`,
     },
   });
 
   const handleCloseClick = () => navigate('/brokers');
 
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
-
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">Create a new broker</h3>
           <BrokerForm
-            isNew
+            submitLabel="Create"
             isSubmitDisabled={
-              (!methods.formState.isValid &&
-                methods.formState.submitCount !== 0) ||
+              !methods.formState.isDirty ||
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
             availableManagers={users}
           />
         </div>

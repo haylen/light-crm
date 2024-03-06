@@ -7,9 +7,10 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Plus, Trash } from 'react-feather';
+import { Trash } from 'react-feather';
 import { namedAction } from 'remix-utils/named-action';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
+import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -116,12 +117,7 @@ export const Route = () => {
         <div>
           <h1 className="text-2xl font-medium">Brokers</h1>
         </div>
-        <button
-          className="btn btn-circle btn-outline"
-          onClick={handleNewBrokerClick}
-        >
-          <Plus size={20} />
-        </button>
+        <NewRecordButton onClick={handleNewBrokerClick} />
       </div>
 
       {brokerIdToDelete && (
