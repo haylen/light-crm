@@ -17,11 +17,7 @@ type LoaderData = {
   csrf: string;
 };
 
-export const meta: MetaFunction = () => [
-  { title: 'Light' },
-  { name: 'charset', content: 'utf-8' },
-  { name: 'viewport', content: 'width=device-width,initial-scale=1' },
-];
+export const meta: MetaFunction = () => [{ title: 'Light' }];
 
 export const loader: LoaderFunction = async ({ request }) => {
   const [token, cookieHeader] = await csrf.commitToken();
@@ -43,6 +39,8 @@ const Root = () => {
   return (
     <html lang="en">
       <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
