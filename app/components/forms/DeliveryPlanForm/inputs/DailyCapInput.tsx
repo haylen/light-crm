@@ -1,10 +1,10 @@
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type DailyCapInputProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const DailyCapInput = ({ formMethods }: DailyCapInputProps) => (
@@ -21,7 +21,9 @@ export const DailyCapInput = ({ formMethods }: DailyCapInputProps) => (
           'input input-bordered w-full',
           formMethods.formState.errors?.dailyCap?.message && 'input-error',
         )}
-        {...formMethods.register('dailyCap')}
+        {...formMethods.register('dailyCap', {
+          setValueAs: (value) => Number(value),
+        })}
       />
     </div>
 

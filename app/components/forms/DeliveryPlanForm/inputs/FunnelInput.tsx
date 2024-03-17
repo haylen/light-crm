@@ -1,11 +1,11 @@
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type FunnelInputProps = {
   availableFunnels: { id: string; name: string }[];
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const FunnelInput = ({
@@ -23,7 +23,9 @@ export const FunnelInput = ({
           'select select-bordered w-full text-base font-normal',
           formMethods.formState.errors?.funnelId?.message && 'select-error',
         )}
-        {...formMethods.register('funnelId')}
+        {...formMethods.register('funnelId', {
+          setValueAs: (value) => value || null,
+        })}
       >
         <option value="">None</option>
         {availableFunnels.map((funnel) => (

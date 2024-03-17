@@ -1,10 +1,10 @@
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type SellPriceInputProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const SellPriceInput = ({ formMethods }: SellPriceInputProps) => (
@@ -21,7 +21,9 @@ export const SellPriceInput = ({ formMethods }: SellPriceInputProps) => (
           'input input-bordered w-full',
           formMethods.formState.errors?.sellPrice?.message && 'input-error',
         )}
-        {...formMethods.register('sellPrice')}
+        {...formMethods.register('sellPrice', {
+          setValueAs: (value) => Number(value),
+        })}
       />
     </div>
 

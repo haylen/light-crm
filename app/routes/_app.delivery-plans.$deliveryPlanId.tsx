@@ -1,6 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ActionFunctionArgs } from '@remix-run/node';
-import { json, redirect } from '@remix-run/node';
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  json,
+  redirect,
+} from '@remix-run/node';
 import {
   useActionData,
   useLoaderData,
@@ -13,42 +17,19 @@ import { promiseHash } from 'remix-utils/promise';
 import { Modal } from '~/components/Modal';
 import { ModalCloseButton } from '~/components/ModalCloseButton';
 import { DeliveryPlanForm } from '~/components/forms/DeliveryPlanForm';
-import type { FormInput } from '~/schemas/deliveryPlan';
+import { type FormInput } from '~/schemas/deliveryPlan';
 import { DeliveryPlanSchema } from '~/schemas/deliveryPlan';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
-import { getCurrentTimezone } from '~/utils/dates';
+import { getHHMMFromDateString } from '~/utils/dates';
 import { db } from '~/utils/db.server';
 import { parseTime } from '~/utils/parseDeliveryPlanWorkHoursTime';
 
 const formResolver = zodResolver(DeliveryPlanSchema);
 
-export const loader = async () => {
-  try {
-    return json(
-      await promiseHash({
-        brokers: db.broker.findMany({
-          select: { id: true, name: true },
-          orderBy: { createdAt: 'desc' },
-        }),
-        brokerIntegrations: db.brokerIntegration.findMany({
-          select: { id: true, name: true },
-          orderBy: { createdAt: 'desc' },
-        }),
-        funnels: db.funnel.findMany({
-          select: { id: true, name: true },
-          orderBy: { createdAt: 'desc' },
-        }),
-      }),
-    );
-  } catch (error) {
-    return redirect('/delivery-plans');
-  }
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
-    [ActionType.CreateDeliveryPlan]: async () => {
+    [ActionType.UpdateDeliveryPlan]: async () => {
       try {
         const { errors, data } = await getValidatedFormData<FormInput>(
           request,
@@ -76,7 +57,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
         delete dataToSave.isWorkHoursEnabled;
 
-        await db.deliveryPlan.create({ data: dataToSave });
+        await db.deliveryPlan.update({
+          where: { id: params.deliveryPlanId },
+          data: dataToSave,
+        });
 
         return redirect('/delivery-plans');
       } catch (error) {
@@ -86,34 +70,62 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
 };
 
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  try {
+    return json(
+      await promiseHash({
+        deliveryPlan: db.deliveryPlan.findUniqueOrThrow({
+          where: { id: params.deliveryPlanId },
+        }),
+        brokers: db.broker.findMany({
+          select: { id: true, name: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+        brokerIntegrations: db.brokerIntegration.findMany({
+          select: { id: true, name: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+        funnels: db.funnel.findMany({
+          select: { id: true, name: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+      }),
+    );
+  } catch (error) {
+    return redirect('/delivery-plans');
+  }
+};
+
 export const Route = () => {
   const actionData = useActionData<typeof action>();
-  const { brokers, brokerIntegrations, funnels } =
+  const { deliveryPlan, brokers, brokerIntegrations, funnels } =
     useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
   const methods = useRemixForm<FormInput>({
-    resolver: zodResolver(DeliveryPlanSchema),
+    resolver: formResolver,
     defaultValues: {
-      name: '',
-      brokerId: undefined,
-      brokerIntegrationId: undefined,
-      funnelId: undefined,
-      buyPrice: undefined,
-      sellPrice: undefined,
-      dailyCap: undefined,
-      totalCap: undefined,
-      startDate: undefined,
-      endDate: undefined,
-      startEndDatesTimezone: getCurrentTimezone(),
-      isWorkHoursEnabled: true,
-      workHoursStart: '9:00',
-      workHoursEnd: '17:00',
-      workHoursTimezone: getCurrentTimezone(),
-      paymentType: undefined,
+      name: deliveryPlan.name,
+      brokerId: deliveryPlan.brokerId,
+      brokerIntegrationId: deliveryPlan.brokerIntegrationId,
+      funnelId: deliveryPlan.funnelId,
+      buyPrice: deliveryPlan.buyPrice,
+      sellPrice: deliveryPlan.sellPrice,
+      dailyCap: deliveryPlan.dailyCap,
+      totalCap: deliveryPlan.totalCap,
+      startDate: new Date(deliveryPlan.startDate),
+      endDate: new Date(deliveryPlan.endDate),
+      startEndDatesTimezone: deliveryPlan.startEndDatesTimezone,
+      isWorkHoursEnabled: Boolean(
+        deliveryPlan.workHoursStart && deliveryPlan.workHoursEnd,
+      ),
+      workHoursStart: getHHMMFromDateString(deliveryPlan.workHoursStart),
+      workHoursEnd: getHHMMFromDateString(deliveryPlan.workHoursEnd),
+      workHoursTimezone: deliveryPlan.workHoursTimezone,
+      paymentType: deliveryPlan.paymentType,
     },
     submitConfig: {
-      action: `?/${ActionType.CreateDeliveryPlan}`,
+      action: `?/${ActionType.UpdateDeliveryPlan}`,
     },
   });
 
@@ -124,9 +136,9 @@ export const Route = () => {
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-4xl">
           <ModalCloseButton onClose={handleCloseClick} />
-          <h3 className="font-bold text-lg mb-4">Create a new delivery plan</h3>
+          <h3 className="font-bold text-lg mb-4">View the delivery plan</h3>
           <DeliveryPlanForm
-            submitLabel="Create"
+            submitLabel="Update"
             isSubmitDisabled={
               !methods.formState.isDirty ||
               ['submitting', 'loading'].includes(navigation.state)

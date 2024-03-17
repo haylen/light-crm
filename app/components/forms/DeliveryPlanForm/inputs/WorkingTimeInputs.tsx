@@ -1,11 +1,12 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { TimeInput } from '~/components/inputs/TimeInput';
 import { TimezoneInput } from '~/components/inputs/TimezoneInput';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type WorkingTimeInputsProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const WorkingTimeInputs = ({ formMethods }: WorkingTimeInputsProps) => {

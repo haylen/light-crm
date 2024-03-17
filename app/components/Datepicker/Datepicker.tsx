@@ -16,6 +16,23 @@ type DatepickerWrapperProps = {
   onChange: (value: Date | undefined) => void;
 };
 
+const prepareDisplayValue = (value: Date | string | undefined) => {
+  if (!value) return EMPTY_PLACEHOLDER;
+
+  let date;
+  if (typeof value === 'string') {
+    date = new Date(value);
+  } else {
+    date = value;
+  }
+
+  return date.toLocaleDateString('en-us', {
+    day: 'numeric',
+    year: 'numeric',
+    month: 'short',
+  });
+};
+
 const DatepickerWrapper = ({
   name,
   value,
@@ -95,13 +112,7 @@ const DatepickerWrapper = ({
           className="w-32 btn btn-ghost font-normal normal-case"
           onClick={handleOpen}
         >
-          {value
-            ? value.toLocaleDateString('en-us', {
-                day: 'numeric',
-                year: 'numeric',
-                month: 'short',
-              })
-            : EMPTY_PLACEHOLDER}
+          {prepareDisplayValue(value)}
         </button>
         <input type="hidden" name={name} value={getYYYYMMDD(value) || ''} />
       </div>

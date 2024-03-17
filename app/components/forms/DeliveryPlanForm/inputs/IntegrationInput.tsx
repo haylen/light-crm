@@ -1,11 +1,11 @@
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type IntegrationInputProps = {
   availableIntegrations: { id: string; name: string }[];
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const IntegrationInput = ({
@@ -24,7 +24,9 @@ export const IntegrationInput = ({
           formMethods.formState.errors?.brokerIntegrationId?.message &&
             'select-error',
         )}
-        {...formMethods.register('brokerIntegrationId')}
+        {...formMethods.register('brokerIntegrationId', {
+          setValueAs: (value) => value || null,
+        })}
       >
         <option value="">None</option>
         {availableIntegrations.map((integration) => (

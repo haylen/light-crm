@@ -11,24 +11,24 @@ const getDateForTimeComparison = (time: string) => {
 
 export const WorkHoursSchema = z
   .object({
-    isWorkHoursEnabled: z.coerce.boolean().optional(),
+    isWorkHoursEnabled: z.boolean().optional(),
     workHoursStart: z
       .string()
       .regex(TIME_REGEX, {
         message: 'Invalid format',
       })
-      .optional(),
+      .nullish(),
     workHoursEnd: z
       .string()
       .regex(TIME_REGEX, {
         message: 'Invalid format',
       })
-      .optional(),
-    workHoursTimezone: z.coerce
+      .nullish(),
+    workHoursTimezone: z
       .number()
       .min(TIMEZONE_MIN, { message: `Max value is ${TIMEZONE_MIN}` })
       .max(TIMEZONE_MAX, { message: `Max value is ${TIMEZONE_MAX}` })
-      .optional(),
+      .nullish(),
   })
   .superRefine((data, ctx) => {
     if (!data.isWorkHoursEnabled) return z.NEVER;

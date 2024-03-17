@@ -1,10 +1,10 @@
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type TotalCapInputProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const TotalCapInput = ({ formMethods }: TotalCapInputProps) => (
@@ -21,7 +21,9 @@ export const TotalCapInput = ({ formMethods }: TotalCapInputProps) => (
           'input input-bordered w-full',
           formMethods.formState.errors?.totalCap?.message && 'input-error',
         )}
-        {...formMethods.register('totalCap')}
+        {...formMethods.register('totalCap', {
+          setValueAs: (value) => Number(value),
+        })}
       />
     </div>
 

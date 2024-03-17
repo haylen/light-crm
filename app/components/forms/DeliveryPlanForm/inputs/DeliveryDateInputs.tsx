@@ -1,11 +1,13 @@
-import { Controller, type UseFormReturn } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { Datepicker } from '~/components/Datepicker';
 import { FormInputError } from '~/components/FormInputError';
 import { TimezoneInput } from '~/components/inputs/TimezoneInput';
 import { type FormInput } from '~/schemas/deliveryPlan';
+import { getYYYYMMDD } from '~/utils/dates';
 
 type DeliveryDateInputsProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const DeliveryDateInputs = ({
@@ -28,7 +30,8 @@ export const DeliveryDateInputs = ({
                 name={field.name}
                 value={field.value}
                 onChange={(event) => {
-                  field.onChange(event);
+                  field.onChange(getYYYYMMDD(event));
+                  formMethods.trigger('startDate');
                   formMethods.trigger('endDate');
                 }}
                 classNames="top-22"
@@ -55,8 +58,9 @@ export const DeliveryDateInputs = ({
                   name={field.name}
                   value={field.value}
                   onChange={(event) => {
-                    field.onChange(event);
+                    field.onChange(getYYYYMMDD(event));
                     formMethods.trigger('startDate');
+                    formMethods.trigger('endDate');
                   }}
                   classNames="top-22"
                 />

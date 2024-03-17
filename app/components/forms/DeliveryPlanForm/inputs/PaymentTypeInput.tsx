@@ -1,6 +1,6 @@
 import { PaymentType } from '@prisma/client';
 import clsx from 'clsx';
-import { type UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
@@ -11,7 +11,7 @@ const MAP_PAYMENT_TYPE_KEY_TO_LABEL = {
 };
 
 type PaymentTypeInputProps = {
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
 };
 
 export const PaymentTypeInput = ({ formMethods }: PaymentTypeInputProps) => (

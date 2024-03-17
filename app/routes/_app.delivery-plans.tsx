@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Plus, Trash } from 'react-feather';
 import { namedAction } from 'remix-utils/named-action';
+import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
@@ -27,18 +28,21 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const authenticatedUser = await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
+  const { authenticatedUser, deliveryPlans, session } = await promiseHash({
+    authenticatedUser: authenticator.isAuthenticated(request, {
+      failureRedirect: '/login',
+    }),
+    deliveryPlans: db.deliveryPlan.findMany({
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    session: getSession(request.headers.get('Cookie')),
   });
-  const deliveryPlans = await db.deliveryPlan.findMany({
-    select: {
-      id: true,
-      name: true,
-      startDate: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  const session = await getSession(request.headers.get('Cookie'));
+
   const deleteDeliveryPlanAction = session.get(
     SessionFlashKey.DeleteDeliveryPlanMeta,
   );

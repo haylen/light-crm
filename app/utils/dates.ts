@@ -15,3 +15,13 @@ export const getYYYYMMDD = (date?: Date) => {
 
 export const getCurrentTimezone = () =>
   (new Date().getTimezoneOffset() / 60) * -1;
+
+export const getHHMMFromDateString = (date: string | null | undefined) => {
+  if (!date) return null;
+
+  const dateObj = new Date(date);
+  const hours = dateObj.getHours().toString().padStart(2, '0');
+  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+};

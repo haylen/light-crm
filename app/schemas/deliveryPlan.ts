@@ -14,18 +14,26 @@ export const DeliveryPlanBaseSchema = z.object({
     .min(1, { message: REQUIRED_FIELD })
     .max(30, { message: 'Max length is 30 characters' }),
   brokerId: z.string().min(1, { message: REQUIRED_FIELD }),
-  brokerIntegrationId: z.string().min(1, { message: REQUIRED_FIELD }),
-  funnelId: z.string().min(1, { message: REQUIRED_FIELD }),
-  buyPrice: z.coerce
+  brokerIntegrationId: z.union([
+    z.string().min(1, { message: REQUIRED_FIELD }),
+    z.undefined(),
+    z.null(),
+  ]),
+  funnelId: z.union([
+    z.string().min(1, { message: REQUIRED_FIELD }),
+    z.undefined(),
+    z.null(),
+  ]),
+  buyPrice: z
     .number({ required_error: REQUIRED_FIELD })
     .min(0, { message: 'Min value is 0' })
     .max(MAX_PRICE, { message: `Max value is ${MAX_PRICE}` }),
-  sellPrice: z.coerce
+  sellPrice: z
     .number({ required_error: REQUIRED_FIELD })
     .min(0, { message: 'Min value is 0' })
     .max(MAX_PRICE, { message: `Max value is ${MAX_PRICE}` }),
-  dailyCap: z.coerce.number().min(1, { message: 'Min value is 1' }).optional(),
-  totalCap: z.coerce.number().min(1, { message: 'Min value is 1' }).optional(),
+  dailyCap: z.number().min(1, { message: 'Min value is 1' }).nullish(),
+  totalCap: z.number().min(1, { message: 'Min value is 1' }).nullish(),
   paymentType: z.nativeEnum(PaymentType, {
     errorMap: () => ({
       message: REQUIRED_FIELD,
