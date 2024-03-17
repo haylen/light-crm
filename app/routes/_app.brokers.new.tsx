@@ -6,7 +6,6 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-  useSubmit,
 } from '@remix-run/react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
@@ -62,7 +61,6 @@ export const Route = () => {
   const { users } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
   const methods = useRemixForm<FormInput>({
     resolver: zodResolver(BrokerSchema),
     defaultValues: {

@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Trash } from 'react-feather';
 import { namedAction } from 'remix-utils/named-action';
+import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
@@ -28,19 +29,22 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const authenticatedUser = await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
+  const { authenticatedUser, brokers, session } = await promiseHash({
+    authenticatedUser: authenticator.isAuthenticated(request, {
+      failureRedirect: '/login',
+    }),
+    brokers: db.broker.findMany({
+      select: {
+        id: true,
+        name: true,
+        managerPercentage: true,
+        manager: { select: { email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    session: getSession(request.headers.get('Cookie')),
   });
-  const brokers = await db.broker.findMany({
-    select: {
-      id: true,
-      name: true,
-      managerPercentage: true,
-      manager: { select: { email: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  const session = await getSession(request.headers.get('Cookie'));
+
   const deleteBrokerAction = session.get(SessionFlashKey.DeleteBrokerMeta);
 
   return json({ authenticatedUser, brokers, deleteBrokerAction });

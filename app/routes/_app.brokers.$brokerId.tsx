@@ -13,6 +13,7 @@ import {
 } from '@remix-run/react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
+import { promiseHash } from 'remix-utils/promise';
 import { Modal } from '~/components/Modal';
 import { ModalCloseButton } from '~/components/ModalCloseButton';
 import { BrokerForm } from '~/components/forms/BrokerForm';
@@ -52,16 +53,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   try {
-    const broker = await db.broker.findUniqueOrThrow({
-      where: { id: params.brokerId },
-    });
-
-    const users = await db.user.findMany({
-      select: { id: true, email: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return json({ broker, users });
+    return json(
+      await promiseHash({
+        broker: db.broker.findUniqueOrThrow({
+          where: { id: params.brokerId },
+        }),
+        users: db.user.findMany({
+          select: { id: true, email: true },
+          orderBy: { createdAt: 'desc' },
+        }),
+      }),
+    );
   } catch (error) {
     return redirect('/brokers');
   }
