@@ -14,9 +14,9 @@ import {
 } from '@remix-run/react';
 import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
-import { BrokerIntegrationForm } from '~/components/BrokerIntegrationForm';
 import { Modal } from '~/components/Modal';
 import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { BrokerIntegrationForm } from '~/components/forms/BrokerIntegrationForm';
 import type { FormInput } from '~/schemas/brokerIntegration';
 import { BrokerIntegrationSchema } from '~/schemas/brokerIntegration';
 import {

@@ -2,8 +2,8 @@ import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { CountryAutocompleteDropdown } from '~/components/CountryAutocompleteDropdown';
 import { ModalSubmitButton } from '~/components/ModalSubmitButton';
+import { CountryAutocompleteDropdown } from '~/components/inputs/CountryAutocompleteDropdown';
 import type { FormInput } from '~/schemas/funnel';
 import { ActionType } from '~/utils/consts/formActions';
 

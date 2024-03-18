@@ -1,7 +1,7 @@
 import { PaymentType } from '@prisma/client';
 import clsx from 'clsx';
 import { useRemixForm } from 'remix-hook-form';
-import { FormInputError } from '~/components/FormInputError';
+import { FormInputError } from '~/components/inputs/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 const MAP_PAYMENT_TYPE_KEY_TO_LABEL = {

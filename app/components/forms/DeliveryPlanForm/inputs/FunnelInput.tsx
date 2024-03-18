@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useRemixForm } from 'remix-hook-form';
-import { FormInputError } from '~/components/FormInputError';
+import { FormInputError } from '~/components/inputs/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
 
 type FunnelInputProps = {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AutocompleteDropdown } from '~/components/AutocompleteDropdown';
+import { AutocompleteDropdown } from '~/components/inputs/AutocompleteDropdown';
 import { Country } from '~/utils/consts/countries';
 
 type CountryAutocompleteDropdownProps = {

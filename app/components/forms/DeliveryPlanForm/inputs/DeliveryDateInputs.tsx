@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 import { useRemixForm } from 'remix-hook-form';
-import { Datepicker } from '~/components/Datepicker';
-import { FormInputError } from '~/components/FormInputError';
+import { Datepicker } from '~/components/inputs/Datepicker';
+import { FormInputError } from '~/components/inputs/FormInputError';
 import { TimezoneInput } from '~/components/inputs/TimezoneInput';
 import { type FormInput } from '~/schemas/deliveryPlan';
 import { getYYYYMMDD } from '~/utils/dates';
