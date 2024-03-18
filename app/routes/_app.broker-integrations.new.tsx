@@ -2,17 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Prisma } from '@prisma/client';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
-import {
-  useActionData,
-  useNavigate,
-  useNavigation,
-  useSubmit,
-} from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { useActionData, useNavigate, useNavigation } from '@remix-run/react';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
 import { BrokerIntegrationForm } from '~/components/BrokerIntegrationForm';
 import { Modal } from '~/components/Modal';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
 import type { FormInput } from '~/schemas/brokerIntegration';
 import { BrokerIntegrationSchema } from '~/schemas/brokerIntegration';
 import {
@@ -22,23 +17,22 @@ import {
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(BrokerIntegrationSchema);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateBrokerIntegration]: async () => {
       try {
-        const form = await request.formData();
-        const name = form.get('name');
+        const { errors, data } = await getValidatedFormData<FormInput>(
+          request,
+          formResolver,
+        );
 
-        const parsedForm = BrokerIntegrationSchema.parse({ name });
-        await db.brokerIntegration.create({
-          data: {
-            name: parsedForm.name,
-          },
-        });
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
+
+        await db.brokerIntegration.create({ data });
 
         return redirect('/broker-integrations');
       } catch (error) {
@@ -59,46 +53,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const methods = useForm<FormInput>({
+  const methods = useRemixForm<FormInput>({
     resolver: zodResolver(BrokerIntegrationSchema),
     defaultValues: {
       name: '',
+    },
+    submitConfig: {
+      action: `?/${ActionType.CreateBrokerIntegration}`,
     },
   });
 
   const handleCloseClick = () => navigate('/broker-integrations');
 
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
-
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">Create a new integration</h3>
           <BrokerIntegrationForm
-            isNew
+            submitLabel="Create"
             isSubmitDisabled={
-              (!methods.formState.isValid &&
-                methods.formState.submitCount !== 0) ||
+              !methods.formState.isDirty ||
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
           />
         </div>
       </div>

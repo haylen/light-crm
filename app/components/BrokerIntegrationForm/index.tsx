@@ -1,35 +1,27 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
-import type { UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
+import { ModalSubmitButton } from '~/components//ModalSubmitButton';
 import type { FormInput } from '~/schemas/brokerIntegration';
-import { ActionType } from '~/utils/consts/formActions';
 
 type BrokerIntegrationFormProps = {
-  isNew?: boolean;
+  submitLabel: string;
   isSubmitDisabled: boolean;
   isSubmitting: boolean;
   formError: string | undefined;
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
   onSubmit: () => void;
 };
 
 export const BrokerIntegrationForm = ({
-  isNew = false,
+  submitLabel,
   isSubmitDisabled,
   isSubmitting,
   formError,
   formMethods,
   onSubmit,
 }: BrokerIntegrationFormProps) => (
-  <Form
-    method="post"
-    action={`?/${
-      isNew
-        ? ActionType.CreateBrokerIntegration
-        : ActionType.UpdateBrokerIntegration
-    }`}
-    onSubmit={onSubmit}
-  >
+  <Form method="post" onSubmit={onSubmit}>
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Name</span>
@@ -54,13 +46,10 @@ export const BrokerIntegrationForm = ({
       {formError && <p className="text-error text-xs">{formError}</p>}
     </div>
 
-    <div className="modal-action">
-      <button
-        disabled={isSubmitDisabled}
-        className={`btn btn-block ${isSubmitting ? 'loading' : ''}`}
-      >
-        {isSubmitting ? '' : isNew ? 'Create' : 'Update'}
-      </button>
-    </div>
+    <ModalSubmitButton
+      isDisabled={isSubmitDisabled}
+      isSubmitting={isSubmitting}
+      label={submitLabel}
+    />
   </Form>
 );
