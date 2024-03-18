@@ -33,7 +33,7 @@ export const TimezoneInput = ({
     >
       {getFormattedDisplayValue(value)}
     </label>
-    <div className="h-36 w-28 mt-2 dropdown-content overflow-auto rounded-md">
+    <div className="h-36 w-32 mt-2 dropdown-content overflow-auto rounded-md z-10">
       <ul className="menu menu-compact bg-base-200 rounded-md">
         {TIMEZONE_SELECT_OPTIONS.map(({ label, value }) => (
           <li

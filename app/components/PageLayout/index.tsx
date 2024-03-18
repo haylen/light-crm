@@ -14,13 +14,13 @@ import { ThemeToggler } from '~/components/ThemeToggler';
 
 export const PageLayout = ({ children }: PropsWithChildren) => (
   <div className="bg-base-300">
-    <div className="drawer drawer-mobile">
-      <input id="my-drawer-2" type="checkbox" className="drawer-toggle" />
-      <div className="drawer-content flex flex-col lg:!z-20">
+    <div className="drawer lg:drawer-open">
+      <input id="sidebar-drawer" type="checkbox" className="drawer-toggle" />
+      <div className="drawer-content flex flex-col min-h-screen lg:!z-20">
         <div className="navbar bg-base-100">
           <div className="flex-1">
             <label
-              htmlFor="my-drawer-2"
+              htmlFor="sidebar-drawer"
               className="btn btn-outline drawer-button lg:hidden"
             >
               <Menu size={20} />
@@ -49,8 +49,8 @@ export const PageLayout = ({ children }: PropsWithChildren) => (
         </footer>
       </div>
       <div className="drawer-side">
-        <label htmlFor="my-drawer-2" className="drawer-overlay"></label>
-        <ul className="menu p-4 w-80 bg-base-100 text-base-content gap-2">
+        <label htmlFor="sidebar-drawer" className="drawer-overlay" />
+        <ul className="menu min-h-full p-4 w-80 bg-base-100 text-base-content gap-2">
           <div className="h-12">Logo</div>
           <li>
             <NavLink

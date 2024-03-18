@@ -88,7 +88,7 @@ export const Route = () => {
         <div className="card w-96 bg-base-200 shadow-xl">
           <div className="card-body">
             <h2 className="card-title mb-2">
-              <p className="text-center text-accent-focus">Welcome</p>
+              <p className="text-center">Sign in</p>
             </h2>
 
             <Form method="post" onSubmit={methods.handleSubmit(handleSubmit)}>
@@ -148,15 +148,13 @@ export const Route = () => {
                       methods.formState.submitCount !== 0) ||
                     ['submitting', 'loading'].includes(navigation.state)
                   }
-                  className={clsx(
-                    'btn btn-accent btn-block',
-                    ['submitting', 'loading'].includes(navigation.state) &&
-                      'loading',
-                  )}
+                  className="btn btn-accent btn-block"
                 >
-                  {['submitting', 'loading'].includes(navigation.state)
-                    ? ''
-                    : 'Log In'}
+                  {['submitting', 'loading'].includes(navigation.state) ? (
+                    <span className="loading loading-spinner" />
+                  ) : (
+                    'Log In'
+                  )}
                 </button>
               </div>
             </Form>

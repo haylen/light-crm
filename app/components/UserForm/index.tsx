@@ -1,6 +1,7 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
+import { ModalSubmitButton } from '~/components/ModalSubmitButton';
 import type { FormInput } from '~/schemas/user';
 import { ActionType } from '~/utils/consts/formActions';
 import { AVAILABLE_ROLES } from '~/utils/consts/users';
@@ -125,13 +126,10 @@ export const UserForm = ({
       {formError && <p className="text-error text-xs">{formError}</p>}
     </div>
 
-    <div className="modal-action">
-      <button
-        disabled={isSubmitDisabled}
-        className={`btn btn-block ${isSubmitting ? 'loading' : ''}`}
-      >
-        {isSubmitting ? '' : isNew ? 'Create' : 'Update'}
-      </button>
-    </div>
+    <ModalSubmitButton
+      isDisabled={isSubmitDisabled}
+      isSubmitting={isSubmitting}
+      label={isNew ? 'Create' : 'Update'}
+    />
   </Form>
 );

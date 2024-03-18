@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import type { UseFormReturn } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { CountryAutocompleteDropdown } from '~/components/CountryAutocompleteDropdown';
+import { ModalSubmitButton } from '~/components/ModalSubmitButton';
 import type { FormInput } from '~/schemas/funnel';
 import { ActionType } from '~/utils/consts/formActions';
 
@@ -116,5 +117,11 @@ export const FunnelForm = ({
         {isSubmitting ? '' : isNew ? 'Create' : 'Update'}
       </button>
     </div>
+
+    <ModalSubmitButton
+      isDisabled={isSubmitDisabled}
+      isSubmitting={isSubmitting}
+      label={isNew ? 'Create' : 'Update'}
+    />
   </Form>
 );

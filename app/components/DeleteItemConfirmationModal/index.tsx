@@ -43,9 +43,13 @@ export const DeleteItemConfirmationModal = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`btn flex-1 ${isSubmitting ? 'loading' : ''}`}
+              className="btn flex-1"
             >
-              Yes
+              {isSubmitting ? (
+                <span className="loading loading-spinner" />
+              ) : (
+                'Yes'
+              )}
             </button>
           </div>
         </Form>

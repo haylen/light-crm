@@ -35,7 +35,7 @@ const TimeParticle = ({
       >
         {value || EMPTY_PLACEHOLDER}
       </label>
-      <div className="h-36 w-36 mt-2 dropdown-content overflow-auto rounded-md">
+      <div className="h-36 w-36 mt-2 dropdown-content overflow-auto rounded-md z-10">
         <ul className="menu menu-compact bg-base-200 rounded-md">
           {selectOptions.map(({ label, value }) => (
             <li
