@@ -109,15 +109,6 @@ export const FunnelForm = ({
       {formError && <p className="text-error text-xs">{formError}</p>}
     </div>
 
-    <div className="modal-action">
-      <button
-        disabled={isSubmitDisabled}
-        className={`btn btn-block ${isSubmitting ? 'loading' : ''}`}
-      >
-        {isSubmitting ? '' : isNew ? 'Create' : 'Update'}
-      </button>
-    </div>
-
     <ModalSubmitButton
       isDisabled={isSubmitDisabled}
       isSubmitting={isSubmitting}
