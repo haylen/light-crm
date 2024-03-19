@@ -1,34 +1,29 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
-import type { UseFormReturn } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { ModalSubmitButton } from '~/components/ModalSubmitButton';
 import { CountryAutocompleteDropdown } from '~/components/inputs/CountryAutocompleteDropdown';
 import type { FormInput } from '~/schemas/funnel';
-import { ActionType } from '~/utils/consts/formActions';
 
 type FunnelFormProps = {
-  isNew?: boolean;
+  submitLabel: string;
   isSubmitDisabled: boolean;
   isSubmitting: boolean;
   formError: string | undefined;
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
   onSubmit: () => void;
 };
 
 export const FunnelForm = ({
-  isNew = false,
+  submitLabel,
   isSubmitDisabled,
   isSubmitting,
   formError,
   formMethods,
   onSubmit,
 }: FunnelFormProps) => (
-  <Form
-    method="post"
-    action={`?/${isNew ? ActionType.CreateFunnel : ActionType.UpdateFunnel}`}
-    onSubmit={onSubmit}
-  >
+  <Form method="post" onSubmit={onSubmit}>
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Name</span>
@@ -79,7 +74,7 @@ export const FunnelForm = ({
           inputName={field.name}
           selectedItem={field.value}
           errorMessage={fieldState.error?.message}
-          onChange={(selectedItem: string | undefined) =>
+          onChange={(selectedItem: string | null) =>
             field.onChange(selectedItem)
           }
         />
@@ -97,7 +92,7 @@ export const FunnelForm = ({
             inputName={field.name}
             selectedItem={field.value}
             errorMessage={fieldState.error?.message}
-            onChange={(selectedItem: string | undefined) =>
+            onChange={(selectedItem: string | null) =>
               field.onChange(selectedItem)
             }
           />
@@ -112,7 +107,7 @@ export const FunnelForm = ({
     <ModalSubmitButton
       isDisabled={isSubmitDisabled}
       isSubmitting={isSubmitting}
-      label={isNew ? 'Create' : 'Update'}
+      label={submitLabel}
     />
   </Form>
 );

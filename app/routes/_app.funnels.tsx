@@ -7,9 +7,11 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Plus, Trash } from 'react-feather';
+import { Trash } from 'react-feather';
 import { namedAction } from 'remix-utils/named-action';
+import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
+import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
@@ -27,13 +29,16 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const authenticatedUser = await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
+  const { authenticatedUser, funnels, session } = await promiseHash({
+    authenticatedUser: authenticator.isAuthenticated(request, {
+      failureRedirect: '/login',
+    }),
+    funnels: db.funnel.findMany({
+      orderBy: { createdAt: 'desc' },
+    }),
+    session: getSession(request.headers.get('Cookie')),
   });
-  const funnels = await db.funnel.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
-  const session = await getSession(request.headers.get('Cookie'));
+
   const deleteFunnelAction = session.get(SessionFlashKey.DeleteFunnelMeta);
 
   return json({ authenticatedUser, funnels, deleteFunnelAction });
@@ -110,12 +115,7 @@ export const Route = () => {
         <div>
           <h1 className="text-2xl font-medium">Funnels</h1>
         </div>
-        <button
-          className="btn btn-circle btn-outline"
-          onClick={handleNewFunnelClick}
-        >
-          <Plus size={20} />
-        </button>
+        <NewRecordButton onClick={handleNewFunnelClick} />
       </div>
 
       {funnelIdToDelete && (

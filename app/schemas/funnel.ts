@@ -23,6 +23,5 @@ export const FunnelSchema = z.object({
         message: 'Please select a country code from the dropdown',
       }),
     })
-    /* Use undefined literal instead of optional() to make language type correct: Country | undefined */
-    .or(z.literal(undefined)),
+    .nullish(),
 });

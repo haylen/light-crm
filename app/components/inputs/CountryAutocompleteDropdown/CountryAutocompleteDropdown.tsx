@@ -6,9 +6,9 @@ type CountryAutocompleteDropdownProps = {
   label: string;
   placeholder: string;
   inputName: string;
-  selectedItem: string | undefined;
+  selectedItem: string | undefined | null;
   errorMessage?: string;
-  onChange(selectedItem: string | undefined): void;
+  onChange(selectedItem: string | null): void;
 };
 
 export const CountryAutocompleteDropdown = ({
@@ -30,7 +30,7 @@ export const CountryAutocompleteDropdown = ({
     : Object.values(Country);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value || undefined);
+    onChange(e.target.value || null);
     setInputValue(e.target.value);
   };
 

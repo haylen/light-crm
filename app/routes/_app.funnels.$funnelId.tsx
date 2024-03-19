@@ -6,13 +6,12 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-  useSubmit,
 } from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
-import { FunnelForm } from '~/components/FunnelForm';
 import { Modal } from '~/components/Modal';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { FunnelForm } from '~/components/forms/FunnelForm';
 import type { FormInput } from '~/schemas/funnel';
 import { FunnelSchema } from '~/schemas/funnel';
 import type { Country } from '~/utils/consts/countries';
@@ -20,34 +19,22 @@ import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(FunnelSchema);
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateFunnel]: async () => {
       try {
-        const form = await request.formData();
-        const name = form.get('name');
-        const websiteUrl = form.get('websiteUrl');
-        const country = form.get('country');
-        const language = form.get('language') || undefined;
+        const { receivedValues, errors, data } =
+          await getValidatedFormData<FormInput>(request, formResolver);
 
-        const parsedForm = FunnelSchema.parse({
-          name,
-          websiteUrl,
-          country,
-          language,
-        });
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
+
         await db.funnel.update({
           where: { id: params.funnelId },
-          data: {
-            name: parsedForm.name,
-            websiteUrl: parsedForm.websiteUrl,
-            country: parsedForm.country,
-            language: parsedForm.language || null,
-          },
+          data,
         });
 
         return redirect('/funnels');
@@ -71,49 +58,41 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const { funnel } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const methods = useForm<FormInput>({
+  const methods = useRemixForm<FormInput>({
     resolver: zodResolver(FunnelSchema),
     defaultValues: {
       name: funnel.name,
       websiteUrl: funnel.websiteUrl,
       country: funnel.country as Country,
-      language: funnel.language ? (funnel.language as Country) : undefined,
+      language: funnel.language ? (funnel.language as Country) : null,
+    },
+    submitConfig: {
+      action: `?/${ActionType.UpdateFunnel}`,
     },
   });
 
   const handleCloseClick = () => navigate('/funnels');
 
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
-
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">View the funnel</h3>
           <FunnelForm
+            submitLabel="Update"
             isSubmitDisabled={
               !methods.formState.isDirty ||
-              !methods.formState.isValid ||
               ['submitting', 'loading'].includes(navigation.state)
             }
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
           />
         </div>
       </div>

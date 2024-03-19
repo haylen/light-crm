@@ -51,7 +51,7 @@ export const AutocompleteDropdown = ({
         />
       </div>
 
-      <div className="h-36 w-full mt-2 dropdown-content overflow-auto rounded-md">
+      <div className="h-36 w-full mt-2 dropdown-content overflow-auto rounded-md z-10">
         <ul className="menu menu-compact bg-base-200 rounded-md">
           {items.map(({ key, value }) => (
             <li
