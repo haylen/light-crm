@@ -1,33 +1,30 @@
 import { Form } from '@remix-run/react';
 import clsx from 'clsx';
-import type { UseFormReturn } from 'react-hook-form';
+import { useRemixForm } from 'remix-hook-form';
 import { ModalSubmitButton } from '~/components/ModalSubmitButton';
 import type { FormInput } from '~/schemas/user';
-import { ActionType } from '~/utils/consts/formActions';
 import { AVAILABLE_ROLES } from '~/utils/consts/users';
 
 type UserFormProps = {
   isNew?: boolean;
+  submitLabel: string;
   isSubmitDisabled: boolean;
   isSubmitting: boolean;
   formError: string | undefined;
-  formMethods: UseFormReturn<FormInput>;
+  formMethods: ReturnType<typeof useRemixForm<FormInput>>;
   onSubmit: () => void;
 };
 
 export const UserForm = ({
   isNew = false,
+  submitLabel,
   isSubmitDisabled,
   isSubmitting,
   formError,
   formMethods,
   onSubmit,
 }: UserFormProps) => (
-  <Form
-    method="post"
-    action={`?/${isNew ? ActionType.CreateUser : ActionType.UpdateUser}`}
-    onSubmit={onSubmit}
-  >
+  <Form method="post" onSubmit={onSubmit}>
     <div className="form-control w-full">
       <label className="label">
         <span className="label-text">Email</span>
@@ -129,7 +126,7 @@ export const UserForm = ({
     <ModalSubmitButton
       isDisabled={isSubmitDisabled}
       isSubmitting={isSubmitting}
-      label={isNew ? 'Create' : 'Update'}
+      label={submitLabel}
     />
   </Form>
 );

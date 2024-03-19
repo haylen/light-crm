@@ -9,9 +9,11 @@ import {
 } from '@remix-run/react';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
-import { Plus, Trash } from 'react-feather';
+import { Trash } from 'react-feather';
 import { namedAction } from 'remix-utils/named-action';
+import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
+import { NewRecordButton } from '~/components/NewRecordButton';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -28,18 +30,21 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const authenticatedUser = await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
+  const { authenticatedUser, users, session } = await promiseHash({
+    authenticatedUser: authenticator.isAuthenticated(request, {
+      failureRedirect: '/login',
+    }),
+    users: db.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        roles: { select: { role: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    session: getSession(request.headers.get('Cookie')),
   });
-  const users = await db.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      roles: { select: { role: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  const session = await getSession(request.headers.get('Cookie'));
+
   const deleteUserAction = session.get(SessionFlashKey.DeleteUserMeta);
 
   return json(
@@ -126,12 +131,7 @@ export const Route = () => {
         <div>
           <h1 className="text-2xl font-medium">Users</h1>
         </div>
-        <button
-          className="btn btn-circle btn-outline"
-          onClick={handleNewUserClick}
-        >
-          <Plus size={20} />
-        </button>
+        <NewRecordButton onClick={handleNewUserClick} />
       </div>
 
       {userIdToDelete && (

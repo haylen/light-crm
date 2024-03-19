@@ -2,17 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Prisma } from '@prisma/client';
 import type { ActionFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
-import {
-  useActionData,
-  useNavigate,
-  useNavigation,
-  useSubmit,
-} from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { useActionData, useNavigate, useNavigation } from '@remix-run/react';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
 import { Modal } from '~/components/Modal';
-import { UserForm } from '~/components/UserForm';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { UserForm } from '~/components/forms/UserForm';
 import type { FormInput } from '~/schemas/user';
 import { CreateUserSchema } from '~/schemas/user';
 import { hashPassword } from '~/services/auth.server';
@@ -23,34 +18,28 @@ import {
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(CreateUserSchema);
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.CreateUser]: async () => {
-      const form = await request.formData();
-      const email = form.get('email');
-      const roles = form.getAll('roles');
-      const password = form.get('password');
-      const passwordConfirmation = form.get('passwordConfirmation');
-
       try {
-        const parsedForm = CreateUserSchema.parse({
-          email,
-          roles,
-          password,
-          passwordConfirmation,
-        });
+        const { errors, data } = await getValidatedFormData<FormInput>(
+          request,
+          formResolver,
+        );
+
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
 
         await db.user.create({
           data: {
-            email: parsedForm.email,
-            passwordHash: await hashPassword(parsedForm.password),
+            email: data.email,
+            passwordHash: await hashPassword(data.password),
             roles: {
               createMany: {
-                data: parsedForm.roles.map((role) => ({ role })),
+                data: data.roles.map((role) => ({ role })),
               },
             },
           },
@@ -75,48 +64,41 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const methods = useForm<FormInput>({
+  const methods = useRemixForm<FormInput>({
     resolver: zodResolver(CreateUserSchema),
-    mode: 'onChange',
     defaultValues: {
       email: '',
       roles: [],
       password: '',
       passwordConfirmation: '',
     },
+    submitConfig: {
+      action: `?/${ActionType.CreateUser}`,
+    },
   });
 
   const handleCloseClick = () => navigate('/users');
-
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
 
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">Create a new user</h3>
           <UserForm
             isNew
-            isSubmitDisabled={['submitting', 'loading'].includes(
-              navigation.state,
-            )}
+            submitLabel="Create"
+            isSubmitDisabled={
+              !methods.formState.isDirty ||
+              ['submitting', 'loading'].includes(navigation.state)
+            }
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
           />
         </div>
       </div>

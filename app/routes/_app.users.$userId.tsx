@@ -7,13 +7,12 @@ import {
   useLoaderData,
   useNavigate,
   useNavigation,
-  useSubmit,
 } from '@remix-run/react';
-import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { getValidatedFormData, useRemixForm } from 'remix-hook-form';
 import { namedAction } from 'remix-utils/named-action';
 import { Modal } from '~/components/Modal';
-import { UserForm } from '~/components/UserForm';
+import { ModalCloseButton } from '~/components/ModalCloseButton';
+import { UserForm } from '~/components/forms/UserForm';
 import type { FormInput } from '~/schemas/user';
 import { UpdateUserSchema } from '~/schemas/user';
 import { hashPassword } from '~/services/auth.server';
@@ -24,26 +23,20 @@ import {
 import { ActionType } from '~/utils/consts/formActions';
 import { db } from '~/utils/db.server';
 
-type ActionData = {
-  formError?: string;
-};
+const formResolver = zodResolver(UpdateUserSchema);
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   return namedAction(request, {
     [ActionType.UpdateUser]: async () => {
-      const form = await request.formData();
-      const email = form.get('email');
-      const roles = form.getAll('roles');
-      const password = form.get('password');
-      const passwordConfirmation = form.get('passwordConfirmation');
-
       try {
-        const parsedForm = UpdateUserSchema.parse({
-          email,
-          roles,
-          password,
-          passwordConfirmation,
-        });
+        const { errors, data } = await getValidatedFormData<FormInput>(
+          request,
+          formResolver,
+        );
+
+        if (errors) {
+          throw new Error('Form validation failed');
+        }
 
         const user = await db.user.findUniqueOrThrow({
           select: { roles: { select: { id: true } } },
@@ -52,21 +45,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
         const updatePasswordData: { passwordHash?: string } = {};
 
-        if (parsedForm.password) {
-          updatePasswordData.passwordHash = await hashPassword(
-            parsedForm.password,
-          );
+        if (data.password) {
+          updatePasswordData.passwordHash = await hashPassword(data.password);
         }
 
         await db.user.update({
           where: { id: params.userId },
           data: {
-            email: parsedForm.email,
+            email: data.email,
             ...updatePasswordData,
             roles: {
               deleteMany: { id: { in: user.roles.map(({ id }) => id) } },
               createMany: {
-                data: parsedForm.roles.map((role) => ({ role })),
+                data: data.roles.map((role) => ({ role })),
               },
             },
           },
@@ -108,41 +99,33 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 export const Route = () => {
-  const actionData = useActionData<ActionData>();
+  const actionData = useActionData<typeof action>();
   const { user } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const submit = useSubmit();
-  const methods = useForm<FormInput>({
+  const methods = useRemixForm<FormInput>({
     resolver: zodResolver(UpdateUserSchema),
-    mode: 'onChange',
     defaultValues: {
       email: user.email,
       roles: user.roles.map(({ role }) => role),
       password: '',
       passwordConfirmation: '',
     },
+    submitConfig: {
+      action: `?/${ActionType.UpdateUser}`,
+    },
   });
 
   const handleCloseClick = () => navigate('/users');
-
-  const handleSubmit: SubmitHandler<FormInput> = async (_data, event) => {
-    if (event) submit(event.target, { replace: true });
-  };
 
   return (
     <Modal>
       <div className="modal modal-open">
         <div className="modal-box w-11/12 max-w-lg">
-          <label
-            htmlFor="my-modal-3"
-            className="btn btn-sm btn-circle absolute right-2 top-2"
-            onClick={handleCloseClick}
-          >
-            ✕
-          </label>
+          <ModalCloseButton onClose={handleCloseClick} />
           <h3 className="font-bold text-lg mb-4">View the user</h3>
           <UserForm
+            submitLabel="Update"
             isSubmitDisabled={
               !methods.formState.isDirty ||
               ['submitting', 'loading'].includes(navigation.state)
@@ -150,7 +133,7 @@ export const Route = () => {
             isSubmitting={navigation.state === 'submitting'}
             formError={actionData?.formError}
             formMethods={methods}
-            onSubmit={methods.handleSubmit(handleSubmit)}
+            onSubmit={methods.handleSubmit}
           />
         </div>
       </div>
