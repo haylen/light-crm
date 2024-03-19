@@ -17,7 +17,9 @@ import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
 import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
+import { MAP_PAYMENT_TYPE_KEY_TO_LABEL } from '~/utils/consts/paymentTypes';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
+import { getYYYYMMDD } from '~/utils/dates';
 import { db } from '~/utils/db.server';
 
 type ActionData = {
@@ -36,7 +38,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       select: {
         id: true,
         name: true,
+        buyPrice: true,
+        sellPrice: true,
         startDate: true,
+        endDate: true,
+        dailyCap: true,
+        totalCap: true,
+        paymentType: true,
+        broker: { select: { name: true } },
+        brokerIntegration: { select: { name: true } },
+        funnel: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -151,7 +162,15 @@ export const Route = () => {
               <tr>
                 <th></th>
                 <th>Name</th>
-                <th>Sart date</th>
+                <th>Broker</th>
+                <th>Funnel</th>
+                <th>Buy price</th>
+                <th>Sell price</th>
+                <th>Daily cap</th>
+                <th>Total cap</th>
+                <th>Start date</th>
+                <th>End date</th>
+                <th>Payment type</th>
                 <th className="w-24" />
               </tr>
             </thead>
@@ -164,7 +183,21 @@ export const Route = () => {
                 >
                   <th>{index + 1}</th>
                   <th>{deliveryPlan.name}</th>
-                  <th>{deliveryPlan.startDate}</th>
+                  <th>{deliveryPlan.broker.name}</th>
+                  <th>{deliveryPlan.funnel?.name}</th>
+                  <th>{`${deliveryPlan.buyPrice}$`}</th>
+                  <th>{`${deliveryPlan.sellPrice}$`}</th>
+                  <th>{deliveryPlan.dailyCap}</th>
+                  <th>{deliveryPlan.totalCap}</th>
+                  <th className="whitespace-nowrap">
+                    {getYYYYMMDD(new Date(deliveryPlan.startDate))}
+                  </th>
+                  <th className="whitespace-nowrap">
+                    {getYYYYMMDD(new Date(deliveryPlan.endDate))}
+                  </th>
+                  <th>
+                    {MAP_PAYMENT_TYPE_KEY_TO_LABEL[deliveryPlan.paymentType]}
+                  </th>
                   <th>
                     <button
                       className="btn btn-ghost btn-xs"

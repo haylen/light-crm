@@ -3,12 +3,7 @@ import clsx from 'clsx';
 import { useRemixForm } from 'remix-hook-form';
 import { FormInputError } from '~/components/inputs/FormInputError';
 import { type FormInput } from '~/schemas/deliveryPlan';
-
-const MAP_PAYMENT_TYPE_KEY_TO_LABEL = {
-  [PaymentType.Cpa]: 'CPA',
-  [PaymentType.Cpl]: 'CPL',
-  [PaymentType.CpaCrg]: 'CPA - CRG',
-};
+import { MAP_PAYMENT_TYPE_KEY_TO_LABEL } from '~/utils/consts/paymentTypes';
 
 type PaymentTypeInputProps = {
   formMethods: ReturnType<typeof useRemixForm<FormInput>>;
