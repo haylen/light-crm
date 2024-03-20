@@ -51,6 +51,7 @@ export const UserForm = ({
       {AVAILABLE_ROLES.map((role, index) => (
         <div key={role} className="form-control w-40">
           <label className="label cursor-pointer justify-start gap-4">
+            {/* TODO: Fix the error: "UserForm contains an input of type checkbox with both value and defaultValue props" */}
             <input
               type="checkbox"
               id={`roles[${index}}]`}
