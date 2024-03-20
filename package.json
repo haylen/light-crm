@@ -21,8 +21,8 @@
     "intl-parse-accept-language": "^1.0.0",
     "is-ip": "^5.0.1",
     "isbot": "^3.6.5",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "18.3.0-canary-a870b2d54-20240314",
+    "react-dom": "18.3.0-canary-a870b2d54-20240314",
     "react-feather": "^2.0.10",
     "react-hook-form": "^7.43.9",
     "remix-auth": "^3.6.0",
@@ -31,6 +31,10 @@
     "remix-utils": "^7.5.0",
     "tailwind-datepicker-react": "^1.4.3",
     "zod": "^3.22.4"
+  },
+  "overrides": {
+    "react": "18.3.0-canary-a870b2d54-20240314",
+    "react-dom": "18.3.0-canary-a870b2d54-20240314"
   },
   "devDependencies": {
     "@remix-run/dev": "2.7.1",
