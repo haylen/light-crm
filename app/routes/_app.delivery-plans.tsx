@@ -12,6 +12,7 @@ import { namedAction } from 'remix-utils/named-action';
 import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
+import { TablePagination } from '~/components/TablePagination';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -21,6 +22,7 @@ import { MAP_PAYMENT_TYPE_KEY_TO_LABEL } from '~/utils/consts/paymentTypes';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
 import { getYYYYMMDD } from '~/utils/dates';
 import { db } from '~/utils/db.server';
+import { RECORDS_PER_PAGE, getPaginationParams } from '~/utils/pagination';
 
 type ActionData = {
   deleteAction?: {
@@ -30,35 +32,43 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { authenticatedUser, deliveryPlans, session } = await promiseHash({
-    authenticatedUser: authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    }),
-    deliveryPlans: db.deliveryPlan.findMany({
-      select: {
-        id: true,
-        name: true,
-        buyPrice: true,
-        sellPrice: true,
-        startDate: true,
-        endDate: true,
-        dailyCap: true,
-        totalCap: true,
-        paymentType: true,
-        broker: { select: { name: true } },
-        brokerIntegration: { select: { name: true } },
-        funnel: { select: { name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    }),
-    session: getSession(request.headers.get('Cookie')),
-  });
+  const { authenticatedUser, deliveryPlans, deliveryPlansCount, session } =
+    await promiseHash({
+      authenticatedUser: authenticator.isAuthenticated(request, {
+        failureRedirect: '/login',
+      }),
+      deliveryPlans: db.deliveryPlan.findMany({
+        select: {
+          id: true,
+          name: true,
+          buyPrice: true,
+          sellPrice: true,
+          startDate: true,
+          endDate: true,
+          dailyCap: true,
+          totalCap: true,
+          paymentType: true,
+          broker: { select: { name: true } },
+          brokerIntegration: { select: { name: true } },
+          funnel: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        ...getPaginationParams(request),
+      }),
+      deliveryPlansCount: db.deliveryPlan.count(),
+      session: getSession(request.headers.get('Cookie')),
+    });
 
   const deleteDeliveryPlanAction = session.get(
     SessionFlashKey.DeleteDeliveryPlanMeta,
   );
 
-  return json({ authenticatedUser, deliveryPlans, deleteDeliveryPlanAction });
+  return json({
+    authenticatedUser,
+    deliveryPlans,
+    deliveryPlansCount,
+    deleteDeliveryPlanAction,
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -95,7 +105,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { deliveryPlans, deleteDeliveryPlanAction } =
+  const { deliveryPlans, deliveryPlansCount, deleteDeliveryPlanAction } =
     useLoaderData<typeof loader>();
   const [deliveryPlanIdToDelete, setDeliveryPlanIdToDelete] =
     useState<string>();
@@ -182,9 +192,9 @@ export const Route = () => {
                   onClick={getOnDeliveryPlanClickHandler(deliveryPlan.id)}
                 >
                   <th>{index + 1}</th>
-                  <th>{deliveryPlan.name}</th>
-                  <th>{deliveryPlan.broker.name}</th>
-                  <th>{deliveryPlan.funnel?.name}</th>
+                  <th className="text-nowrap">{deliveryPlan.name}</th>
+                  <th className="text-nowrap">{deliveryPlan.broker.name}</th>
+                  <th className="text-nowrap">{deliveryPlan.funnel?.name}</th>
                   <th>{`${deliveryPlan.buyPrice}$`}</th>
                   <th>{`${deliveryPlan.sellPrice}$`}</th>
                   <th>{deliveryPlan.dailyCap}</th>
@@ -211,6 +221,13 @@ export const Route = () => {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="flex flex-row-reverse mt-8">
+        <TablePagination
+          totalRecorsCount={deliveryPlansCount}
+          recordsPerPageCount={RECORDS_PER_PAGE}
+        />
       </div>
     </div>
   );

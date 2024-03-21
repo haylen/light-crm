@@ -13,6 +13,7 @@ import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
+import { TablePagination } from '~/components/TablePagination';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -20,6 +21,7 @@ import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
 import { db } from '~/utils/db.server';
+import { RECORDS_PER_PAGE, getPaginationParams } from '~/utils/pagination';
 
 type ActionData = {
   deleteAction?: {
@@ -29,13 +31,20 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { authenticatedUser, brokerIntegrations, session } = await promiseHash({
+  const {
+    authenticatedUser,
+    brokerIntegrations,
+    brokerIntegrationsCount,
+    session,
+  } = await promiseHash({
     authenticatedUser: authenticator.isAuthenticated(request, {
       failureRedirect: '/login',
     }),
     brokerIntegrations: db.brokerIntegration.findMany({
       orderBy: { createdAt: 'desc' },
+      ...getPaginationParams(request),
     }),
+    brokerIntegrationsCount: db.brokerIntegration.count(),
     session: getSession(request.headers.get('Cookie')),
   });
 
@@ -46,6 +55,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return json({
     authenticatedUser,
     brokerIntegrations,
+    brokerIntegrationsCount,
     deleteBrokerIntegrationAction,
   });
 };
@@ -87,8 +97,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { brokerIntegrations, deleteBrokerIntegrationAction } =
-    useLoaderData<typeof loader>();
+  const {
+    brokerIntegrations,
+    brokerIntegrationsCount,
+    deleteBrokerIntegrationAction,
+  } = useLoaderData<typeof loader>();
   const [brokerIntegrationIdToDelete, setBrokerIntegrationIdToDelete] =
     useState<string>();
   const [deleteActionError, setDeleteActionError] = useState<
@@ -177,6 +190,13 @@ export const Route = () => {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="flex flex-row-reverse mt-8">
+        <TablePagination
+          totalRecorsCount={brokerIntegrationsCount}
+          recordsPerPageCount={RECORDS_PER_PAGE}
+        />
       </div>
     </div>
   );

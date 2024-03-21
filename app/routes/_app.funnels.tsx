@@ -13,6 +13,7 @@ import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
+import { TablePagination } from '~/components/TablePagination';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -20,6 +21,7 @@ import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
 import { db } from '~/utils/db.server';
+import { RECORDS_PER_PAGE, getPaginationParams } from '~/utils/pagination';
 
 type ActionData = {
   deleteAction?: {
@@ -29,19 +31,22 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { authenticatedUser, funnels, session } = await promiseHash({
-    authenticatedUser: authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    }),
-    funnels: db.funnel.findMany({
-      orderBy: { createdAt: 'desc' },
-    }),
-    session: getSession(request.headers.get('Cookie')),
-  });
+  const { authenticatedUser, funnels, funnelsCount, session } =
+    await promiseHash({
+      authenticatedUser: authenticator.isAuthenticated(request, {
+        failureRedirect: '/login',
+      }),
+      funnels: db.funnel.findMany({
+        orderBy: { createdAt: 'desc' },
+        ...getPaginationParams(request),
+      }),
+      funnelsCount: db.funnel.count(),
+      session: getSession(request.headers.get('Cookie')),
+    });
 
   const deleteFunnelAction = session.get(SessionFlashKey.DeleteFunnelMeta);
 
-  return json({ authenticatedUser, funnels, deleteFunnelAction });
+  return json({ authenticatedUser, funnels, funnelsCount, deleteFunnelAction });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -78,7 +83,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { funnels, deleteFunnelAction } = useLoaderData<typeof loader>();
+  const { funnels, funnelsCount, deleteFunnelAction } =
+    useLoaderData<typeof loader>();
   const [funnelIdToDelete, setFunnelIdToDelete] = useState<string>();
   const [deleteActionError, setDeleteActionError] = useState<
     string | undefined
@@ -150,8 +156,8 @@ export const Route = () => {
                   onClick={getOnFunnelClickHandler(funnel.id)}
                 >
                   <th>{index + 1}</th>
-                  <th>{funnel.name}</th>
-                  <th>{funnel.websiteUrl}</th>
+                  <th className="text-nowrap">{funnel.name}</th>
+                  <th className="text-nowrap">{funnel.websiteUrl}</th>
                   <th>{funnel.country}</th>
                   <th>{funnel.language}</th>
                   <th>
@@ -167,6 +173,13 @@ export const Route = () => {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="flex flex-row-reverse mt-8">
+        <TablePagination
+          totalRecorsCount={funnelsCount}
+          recordsPerPageCount={RECORDS_PER_PAGE}
+        />
       </div>
     </div>
   );

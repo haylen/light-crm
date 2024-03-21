@@ -13,6 +13,7 @@ import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NewRecordButton } from '~/components/NewRecordButton';
 import { NoRecordsPlaceholder } from '~/components/NoRecordsPlaceholder';
+import { TablePagination } from '~/components/TablePagination';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -20,6 +21,7 @@ import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
 import { db } from '~/utils/db.server';
+import { RECORDS_PER_PAGE, getPaginationParams } from '~/utils/pagination';
 
 type ActionData = {
   deleteAction?: {
@@ -29,25 +31,28 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { authenticatedUser, brokers, session } = await promiseHash({
-    authenticatedUser: authenticator.isAuthenticated(request, {
-      failureRedirect: '/login',
-    }),
-    brokers: db.broker.findMany({
-      select: {
-        id: true,
-        name: true,
-        managerPercentage: true,
-        manager: { select: { email: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    }),
-    session: getSession(request.headers.get('Cookie')),
-  });
+  const { authenticatedUser, brokers, brokersCount, session } =
+    await promiseHash({
+      authenticatedUser: authenticator.isAuthenticated(request, {
+        failureRedirect: '/login',
+      }),
+      brokers: db.broker.findMany({
+        select: {
+          id: true,
+          name: true,
+          managerPercentage: true,
+          manager: { select: { email: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        ...getPaginationParams(request),
+      }),
+      brokersCount: db.broker.count(),
+      session: getSession(request.headers.get('Cookie')),
+    });
 
   const deleteBrokerAction = session.get(SessionFlashKey.DeleteBrokerMeta);
 
-  return json({ authenticatedUser, brokers, deleteBrokerAction });
+  return json({ authenticatedUser, brokers, brokersCount, deleteBrokerAction });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -84,7 +89,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { brokers, deleteBrokerAction } = useLoaderData<typeof loader>();
+  const { brokers, brokersCount, deleteBrokerAction } =
+    useLoaderData<typeof loader>();
   const [brokerIdToDelete, setBrokerIdToDelete] = useState<string>();
   const [deleteActionError, setDeleteActionError] = useState<
     string | undefined
@@ -155,8 +161,10 @@ export const Route = () => {
                   onClick={getOnBrokerClickHandler(broker.id)}
                 >
                   <th>{index + 1}</th>
-                  <th>{broker.name}</th>
-                  <th>{broker.manager ? broker.manager.email : null}</th>
+                  <th className="text-nowrap">{broker.name}</th>
+                  <th className="text-nowrap">
+                    {broker.manager ? broker.manager.email : null}
+                  </th>
                   <th>{broker.manager ? broker.managerPercentage : null}</th>
                   <th>
                     <button
@@ -171,6 +179,13 @@ export const Route = () => {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="flex flex-row-reverse mt-8">
+        <TablePagination
+          totalRecorsCount={brokersCount}
+          recordsPerPageCount={RECORDS_PER_PAGE}
+        />
       </div>
     </div>
   );

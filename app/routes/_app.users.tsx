@@ -14,6 +14,7 @@ import { namedAction } from 'remix-utils/named-action';
 import { promiseHash } from 'remix-utils/promise';
 import { DeleteItemConfirmationModal } from '~/components/DeleteItemConfirmationModal';
 import { NewRecordButton } from '~/components/NewRecordButton';
+import { TablePagination } from '~/components/TablePagination';
 import { DeleteItemConfirmationFormSchema } from '~/schemas/deleteItemConfirmationForm';
 import { authenticator } from '~/services/auth.server';
 import { commitSession, getSession } from '~/services/session.server';
@@ -21,6 +22,7 @@ import { SOMETHING_WENT_WRONG } from '~/utils/consts/errors';
 import { ActionType } from '~/utils/consts/formActions';
 import { SessionFlashKey } from '~/utils/consts/sessionFlashes';
 import { db } from '~/utils/db.server';
+import { RECORDS_PER_PAGE, getPaginationParams } from '~/utils/pagination';
 
 type ActionData = {
   deleteAction?: {
@@ -30,7 +32,7 @@ type ActionData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { authenticatedUser, users, session } = await promiseHash({
+  const { authenticatedUser, users, usersCount, session } = await promiseHash({
     authenticatedUser: authenticator.isAuthenticated(request, {
       failureRedirect: '/login',
     }),
@@ -41,14 +43,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         roles: { select: { role: true } },
       },
       orderBy: { createdAt: 'desc' },
+      ...getPaginationParams(request),
     }),
+    usersCount: db.user.count(),
     session: getSession(request.headers.get('Cookie')),
   });
 
   const deleteUserAction = session.get(SessionFlashKey.DeleteUserMeta);
 
   return json(
-    { authenticatedUser, users, deleteUserAction },
+    { authenticatedUser, users, usersCount, deleteUserAction },
     { headers: { 'Set-Cookie': await commitSession(session) } },
   );
 };
@@ -95,7 +99,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const Route = () => {
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const { authenticatedUser, users, deleteUserAction } =
+  const { authenticatedUser, users, usersCount, deleteUserAction } =
     useLoaderData<typeof loader>();
   const [userIdToDelete, setUserIdToDelete] = useState<string>();
   const [deleteActionError, setDeleteActionError] = useState<
@@ -161,7 +165,7 @@ export const Route = () => {
                 onClick={getOnUserClickHandler(user.id)}
               >
                 <th>{index + 1}</th>
-                <th>{user.email}</th>
+                <th className="text-nowrap">{user.email}</th>
                 <th>
                   {user.roles.map(({ role }, index) => (
                     <div
@@ -190,6 +194,13 @@ export const Route = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex flex-row-reverse mt-8">
+        <TablePagination
+          totalRecorsCount={usersCount}
+          recordsPerPageCount={RECORDS_PER_PAGE}
+        />
       </div>
     </div>
   );
