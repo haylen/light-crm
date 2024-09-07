@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react';
-
-const THEME_DARK = 'dark';
-const THEME_LIGHT = 'light';
-const THEME_LS_KEY = 'light-crm-theme';
+import { useTheme } from '~/components/ThemeProvider';
+import { Theme } from '~/utils/consts/theme';
 
 export const ThemeToggler = () => {
-  const [theme, setTheme] = useState(THEME_LIGHT);
+  const [theme, setTheme] = useTheme();
 
-  useEffect(() => {
-    const currentTheme =
-      window.localStorage.getItem(THEME_LS_KEY) || THEME_LIGHT;
-    setTheme(currentTheme);
-    document.querySelector('html')?.setAttribute('data-theme', currentTheme);
-  }, []);
-
-  const handleChangeClick = () => {
-    const nextTheme = theme === THEME_DARK ? THEME_LIGHT : THEME_DARK;
-    setTheme(nextTheme);
-    window.localStorage.setItem(THEME_LS_KEY, nextTheme);
-    document.querySelector('html')?.setAttribute('data-theme', nextTheme);
-  };
+  const handleChangeClick = () =>
+    setTheme((prevTheme) =>
+      prevTheme === Theme.Light ? Theme.Dark : Theme.Light,
+    );
 
   return (
     <label className="swap swap-rotate">
       <input
         type="checkbox"
-        checked={theme === THEME_DARK}
+        checked={theme === Theme.Dark}
         onChange={handleChangeClick}
       />
 
