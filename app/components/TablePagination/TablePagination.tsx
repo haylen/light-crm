@@ -45,7 +45,7 @@ export const TablePagination = ({
         }}
         preventScrollReset
         prefetch="intent"
-        className="join-item btn btn-outline"
+        className="join-item btn btn-sm btn-outline"
       >
         «
       </Link>
@@ -57,7 +57,7 @@ export const TablePagination = ({
         }}
         preventScrollReset
         prefetch="intent"
-        className="join-item btn btn-outline"
+        className="join-item btn btn-sm btn-outline"
       >
         ‹
       </Link>
@@ -69,7 +69,7 @@ export const TablePagination = ({
         }}
         preventScrollReset
         prefetch="intent"
-        className="join-item btn btn-outline btn-active"
+        className="join-item btn btn-sm btn-outline"
       >
         Page {page} of {totalPages}
       </Link>
@@ -81,7 +81,7 @@ export const TablePagination = ({
         }}
         preventScrollReset
         prefetch="intent"
-        className="join-item btn btn-outline"
+        className="join-item btn btn-sm btn-outline"
       >
         ›
       </Link>
@@ -93,7 +93,7 @@ export const TablePagination = ({
         }}
         preventScrollReset
         prefetch="intent"
-        className="join-item btn btn-outline"
+        className="join-item btn btn-sm btn-outline"
       >
         »
       </Link>
