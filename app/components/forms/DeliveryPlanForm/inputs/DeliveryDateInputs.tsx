@@ -27,7 +27,6 @@ export const DeliveryDateInputs = ({
             control={formMethods.control}
             render={({ field }) => (
               <Datepicker
-                name={field.name}
                 value={field.value}
                 onChange={(event) => {
                   field.onChange(getYYYYMMDD(event));
@@ -55,7 +54,6 @@ export const DeliveryDateInputs = ({
               control={formMethods.control}
               render={({ field }) => (
                 <Datepicker
-                  name={field.name}
                   value={field.value}
                   onChange={(event) => {
                     field.onChange(getYYYYMMDD(event));

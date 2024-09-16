@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { Slash, X } from 'react-feather';
 import Datepicker from 'tailwind-datepicker-react';
-import { getYYYYMMDD } from '~/utils/dates';
 
 const DEFAULT_MIN_DATE = new Date('2023-01-01');
 const DEFAULT_MAX_DATE = new Date('2040-01-01');
 const EMPTY_PLACEHOLDER = '-';
 
 type DatepickerWrapperProps = {
-  name: string;
   value: Date | undefined;
   classNames?: string;
   minDate?: Date;
@@ -34,7 +32,6 @@ const prepareDisplayValue = (value: Date | string | undefined) => {
 };
 
 const DatepickerWrapper = ({
-  name,
   value,
   onChange,
   classNames = '',
@@ -114,7 +111,6 @@ const DatepickerWrapper = ({
         >
           {prepareDisplayValue(value)}
         </button>
-        <input type="hidden" name={name} value={getYYYYMMDD(value) || ''} />
       </div>
     </Datepicker>
   );
